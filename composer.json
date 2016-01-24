@@ -1,0 +1,23 @@
+{
+    "name": "jetfire/routing",
+    "type": "library",
+    "description": "Jetfire - Routing",
+    "keywords": ["Rounting", "Dispatcher"],
+    "license": ["LGPL-3.0+","CC0-1.0"],
+    "authors": [
+        {
+            "name": "Sumi Sinna",
+            "email": "mugan27@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0"
+    },
+    "autoload": {
+        "psr-4":{
+            "JetFire\\Routing\\": ""
+        }
+    },
+    "minimum-stability": "dev"
+}
