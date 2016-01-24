@@ -3,7 +3,7 @@
     "type": "library",
     "description": "Jetfire - Routing",
     "keywords": ["Rounting", "Dispatcher"],
-    "license": ["LGPL-3.0+","CC0-1.0"],
+    "license": "MIT",
     "authors": [
         {
             "name": "Sumi Sinna",
@@ -16,7 +16,7 @@
     },
     "autoload": {
         "psr-4":{
-            "JetFire\\Routing\\": ""
+            "JetFire\\Routing\\": "src/Routing/"
         }
     },
     "minimum-stability": "dev"
