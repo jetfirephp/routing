@@ -15,7 +15,7 @@ A simple & powerful router for PHP 5.4+
 ### Getting started
 
 1. PHP 5.4+ is required
-2. Install JetFire\Routing using Composer
+2. Install `JetFire\Routing` using Composer
 3. Setup URL rewriting so that all requests are handled by index.php
 
 ### Installation
@@ -28,7 +28,7 @@ $ composer require jetfirephp/routing
 
 ### Usage
 
-Create an instance of \JetFire\Routing\RouteCollection and define your routes. Then create an instance of \JetFire\Routing\Router and run the following routes.
+Create an instance of `JetFire\Routing\RouteCollection` and define your routes. Then create an instance of `JetFire\Routing\Router` and run the following routes.
 
 ```php
 // Require composer autoloader
@@ -342,7 +342,8 @@ class Global{
 		// ...
 	}
 }
-```phpSee the API section to learn how to handle your $route in middleware class.
+```
+See the API section to learn how to handle your $route in middleware class.
 
 ### Custom Response
 
