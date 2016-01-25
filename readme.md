@@ -53,7 +53,7 @@ With Smart Routing you don't have to define your routes. Depending on the url it
 
 For exemple if the url is : `/home/index`
 
-1. Template matcher
+##### Template matcher
 
 Smart Routing check if an `index.php` file exist in the `/Views/Home` directory. By default `Views/` is the directory containing all templates. But you can change it using `setConfig()` function. Look Views section for more details.
 
@@ -68,7 +68,7 @@ $router->setConfig([
 ]);
 ```
 
-2. Controller matcher
+##### Controller matcher
 
 If Smart Routing failed to find the template then it check if a controller with name `HomeController` has the `index` method.
 
@@ -97,7 +97,7 @@ return [
 
 You have 3 action possible for Array Routing. We assume you are using a separate file for your routes.
 
-1. Template Route
+##### Template Route
 
 ```php
 return [
@@ -114,7 +114,7 @@ return [
 ];
 ```
 
-2. Mvc Route
+##### Mvc Route
 
 
 ```php
@@ -132,7 +132,7 @@ return [
 ];
 ```
 
-3. Callback Route
+##### Callback Route
 
 ```php
 return [
