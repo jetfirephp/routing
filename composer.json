@@ -1,12 +1,12 @@
 {
-    "name": "jetfire/routing",
+    "name": "jetfirephp/routing",
     "type": "library",
-    "description": "Jetfire - Routing",
+    "description": "JetFire - Routing",
     "keywords": ["Rounting", "Dispatcher"],
     "license": "MIT",
     "authors": [
         {
-            "name": "Sumi Sinna",
+            "name": "Sumugan Sinnarasa",
             "email": "mugan27@gmail.com",
             "role": "Developer"
         }
