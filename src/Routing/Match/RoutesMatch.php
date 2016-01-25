@@ -87,9 +87,10 @@ class RoutesMatch implements Matcher
     {
         if (isset($this->request['path']['name'])) $this->router->route->setName($this->request['path']['name']);
         if (isset($this->request['path']['method'])) $this->request['path']['method'] = is_array($this->request['path']['method']) ? $this->request['path']['method'] : [$this->request['path']['method']];
-        if (isset($this->request['path']) && is_array($this->request['path']))
-            if (isset($this->request['path']['use'])) $this->router->route->setCallback($this->request['path']['use']);
-            elseif (is_string($this->request['path'])) $this->router->route->setCallback($this->request['path']);
+        if (isset($this->request['path']))
+            (is_array($this->request['path']) && isset($this->request['path']['use']))
+                ? $this->router->route->setCallback($this->request['path']['use'])
+                : $this->router->route->setCallback($this->request['path']);
         $this->router->route->setDetail($this->request);
         if ($this->validMethod()) {
             $this->router->route->setResponse(['code' => 202, 'message' => 'Accepted']);
@@ -135,12 +136,11 @@ class RoutesMatch implements Matcher
             $routes = explode('@', $this->router->route->getCallback());
             if (!isset($routes[1])) $routes[1] = 'index';
             if (is_file(($path = $this->router->route->getBlock() . $this->router->getConfig()['controllerPath'] . '/') . $routes[0] . '.php'))
-                require $path . $routes[0] . '.php';
+                require_once $path . $routes[0] . '.php';
             elseif (is_file(($path = $this->router->getConfig()['controllerPath'] . '/') . $routes[0] . '.php'))
-                require $path . $routes[0] . '.php';
-            else
+                require_once $path . $routes[0] . '.php';
+            elseif (!class_exists($routes[0]))
                 throw new \Exception('The require file "' . $routes[0] . '.php" is not found in "' . $path . '"');
-            $routes[0] = str_replace('/', '\\', $path) . $routes[0];
             if (method_exists($routes[0], $routes[1])) {
                 $this->router->route->setTarget(['dispatcher' => 'JetFire\Routing\Dispatcher\MvcDispatcher', 'controller' => $routes[0], 'action' => $routes[1]]);
                 return true;

@@ -14,9 +14,17 @@
     "require": {
         "php": ">=5.4.0"
     },
+    "require-dev": {
+        "phpunit/phpunit": "5.1.*"       
+    },
     "autoload": {
         "psr-4":{
             "JetFire\\Routing\\": "src/Routing/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "JetFire\\Routing\\Test\\": "tests/src/Routing/"
         }
     },
     "minimum-stability": "dev"

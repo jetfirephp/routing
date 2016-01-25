@@ -44,7 +44,6 @@ class Router
     public function __construct(RouteCollection $collection)
     {
         $this->collection = $collection;
-        $this->route = new Route();
     }
 
     /**
@@ -70,25 +69,43 @@ class Router
      */
     public function run()
     {
-        $url = (isset($_GET['url'])) ? $_GET['url'] : substr(str_replace(str_replace('/index.php', '', $_SERVER['SCRIPT_NAME']), '', $_SERVER['REQUEST_URI']), 1);
-        $this->route->setUrl('/' . trim(explode('?', $url)[0], '/'));
+        $this->setUrl();
         if ($this->config['generateRoutesPath']) $this->collection->generateRoutesPath();
-        foreach ($this->config['matcher'] as $matcher) {
-            $this->config['matcherInstance'][$matcher] = new $matcher($this);
-            if (call_user_func([$this->config['matcherInstance'][$matcher], 'match'])) {
-                $this->handle();
-                $this->callTarget();
-                break;
-            }
+        if ($this->match()) {
+            $this->handle();
+            $this->callTarget();
         }
         $this->callResponse();
-        var_dump($this->route);
+    }
+
+    /**
+     * @param null $url
+     */
+    public function setUrl($url = null)
+    {
+        $this->route = new Route();
+        if (is_null($url))
+            $url = (isset($_GET['url'])) ? $_GET['url'] : substr(str_replace(str_replace('/index.php', '', $_SERVER['SCRIPT_NAME']), '', $_SERVER['REQUEST_URI']), 1);
+        $this->route->setUrl('/' . trim(explode('?', $url)[0], '/'));
+    }
+
+    /**
+     * @return bool
+     */
+    public function match()
+    {
+        foreach ($this->config['matcher'] as $matcher) {
+            $this->config['matcherInstance'][$matcher] = new $matcher($this);
+            if (call_user_func([$this->config['matcherInstance'][$matcher], 'match']))
+                return true;
+        }
+        return false;
     }
 
     /**
      * @return mixed
      */
-    private function callTarget()
+    public function callTarget()
     {
         $target = $this->route->getTarget('dispatcher');
         $this->dispatcher = new $target($this);

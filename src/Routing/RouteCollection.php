@@ -67,22 +67,6 @@ class RouteCollection
     }
 
     /**
-     * @param null $name
-     * @param array $params
-     * @return mixed
-     */
-    public function getRoutePath($name, $params = [])
-    {
-        foreach ($this->routesByName as $key => $route) {
-            $param = explode('@', $key);
-            foreach ($params as $key2 => $value) $route = str_replace(':' . $key2, $value, $route);
-            if ($param[0] == trim($name, '/')) return $route;
-            else if (isset($param[1]) && $param[1] == $name) return $route;
-        }
-        return null;
-    }
-
-    /**
      * @param $args
      */
     public function setPrefix($args)
@@ -125,12 +109,27 @@ class RouteCollection
                     if (is_array($dependencies) && isset($dependencies['use']))
                         $use = (is_object($dependencies['use'])) ? 'closure-' . $count : trim($dependencies['use'], '/');
                     else
-                        $use = trim($dependencies, '/');
-                    isset($dependencies['name']) ? $this->routesByName[$use . '@' . $dependencies['name']] = $root . $prefix . $route : $this->routesByName[$use] = $root . $prefix . $route;
+                        $use = (is_object($dependencies)) ? 'closure-' . $count : trim($dependencies, '/');
+                    (!is_object($dependencies) && isset($dependencies['name'])) ? $this->routesByName[$use . '#' . $dependencies['name']] = $root . $prefix . $route : $this->routesByName[$use] = $root . $prefix . $route;
                     $count++;
                 }
         }
         return true;
     }
 
+    /**
+     * @param null $name
+     * @param array $params
+     * @return mixed
+     */
+    public function getRoutePath($name, $params = [])
+    {
+        foreach ($this->routesByName as $key => $route) {
+            $param = explode('#', $key);
+            foreach ($params as $key2 => $value) $route = str_replace(':' . $key2, $value, $route);
+            if ($param[0] == trim($name, '/')) return $route;
+            else if (isset($param[1]) && $param[1] == $name) return $route;
+        }
+        return null;
+    }
 } 
