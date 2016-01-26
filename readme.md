@@ -1,22 +1,26 @@
 ## JetFire PHP Routing
+[![Build Status](https://travis-ci.org/jetfirephp/routing.svg?branch=master)](https://travis-ci.org/jetfirephp/routing)
 
 A simple & powerful router for PHP 5.4+
 
 ### Features
 
-* Supprot static & dynamic route patterns
-* Smart matcher
-* Template matching
-* Controller matching
-* Support REST routing
-* Route Middleware
-* Create your custom matcher
+* Support static & dynamic route patterns
+* [Support REST routing](#rest)
+* [Support reversed routing using named routes](#named-routes)
+* [Smart routing](#smart-routing)
+* [Array routing](#array-routing)
+* [Template matching](#template-matching)
+* [MVC matching](#mvc-matching)
+* [Route Middleware](#middleware)
+* [Custom response](#response)
+* [Integration with other libraries](#libraries)
 
 ### Getting started
 
 1. PHP 5.4+ is required
 2. Install `JetFire\Routing` using Composer
-3. Setup URL rewriting so that all requests are handled by index.php
+3. Setup URL rewriting so that all requests are handled by index.php (see .htaccess file)
 
 ### Installation
 
@@ -28,7 +32,7 @@ $ composer require jetfirephp/routing
 
 ### Usage
 
-Create an instance of `JetFire\Routing\RouteCollection` and define your routes. Then create an instance of `JetFire\Routing\Router` and run the following routes.
+Create an instance of `JetFire\Routing\RouteCollection` and define your routes. Then create an instance of `JetFire\Routing\Router` and run your routes.
 
 ```php
 // Require composer autoloader
@@ -46,16 +50,16 @@ $router = new \JetFire\Routing\Router($collection)
 // Run it!
 $router->run();
 ```
-
+<a name="smart-routing"></a>
 #### Smart Routing
 
-With Smart Routing you don't have to define your routes. Depending on the url it can check if a target exist for the current url.
+With Smart Routing you don't have to define your routes. Depending on the uri it can check if a target exist for the current url.
 
-For exemple if the url is : `/home/index`
+For example if the uri is : `/home/index`
 
 ##### Template matcher
 
-Smart Routing check if an `index.php` file exist in the `/Views/Home` directory. By default `Views/` is the directory containing all templates. But you can change it using `setConfig()` function. Look Views section for more details.
+Smart Routing check if an `index.php` file exist in `/Views/Home` directory. By default `Views/` is the directory containing all templates. But you can change it using `setConfig()` function. Look [Views](#views) section for more details.
 
 If you want to check for other extension (html,json,...) You can configure the router like this :
 
@@ -68,10 +72,10 @@ $router->setConfig([
 ]);
 ```
 
-##### Controller matcher
+##### Mvc matcher
 
 If Smart Routing failed to find the template then it check if a controller with name `HomeController` has the `index` method.
-
+<a name="array-routing"></a>
 #### Array Routing
 
 With Array Routing you have to add your routes like this :
@@ -86,7 +90,7 @@ $collection->addRoutes([
 $collection->addRoutes('path_to_array_file');
 ```
 
-We recommend that you define your routes in a separate file and add the path to the RouteCollection.
+We recommend that you define your routes in a separate file and pass the path to `addRoutes()` method.
 
 ```php
 // routes.php file
@@ -96,7 +100,7 @@ return [
 ```
 
 You have 3 action possible for Array Routing. We assume you are using a separate file for your routes.
-
+<a name="template-matching"></a>
 ##### Template Route
 
 ```php
@@ -113,7 +117,7 @@ return [
 
 ];
 ```
-
+<a name="mvc-matching"></a>
 ##### Mvc Route
 
 
@@ -183,7 +187,7 @@ $router->setConfig([
 	'generateRoutesPath' => false,
 ]);
 ```
-
+<a name="named-routes"></a>
 ### Named Routes
 
 You can specify a name for each route like this :
@@ -214,12 +218,13 @@ $router->setConfig([
 	// ...
 ]);
 
+// Reverse routing
 $collection->getRoutePath('home.index'); // return http://your_domain/home/index
 $collection->getRoutePath('home.user',[ 'id' => 1, 'slug' => 'toto']); // return http://your_domain/home/user-1-toto
 ```
 
 Supported only in `JetFire\Routing\Match\RoutesMatch`.
-
+<a name="rest"></a>
 ### REST Routing
 
 You can specify the request method for each route like this :
@@ -241,10 +246,10 @@ return [
 	],
 ];
 ```
-
+<a name="views"></a>
 ### Views
 
-By default `JetFire\Router` check all view templates in `Views` directory but you can change it like :
+By default `JetFire\Router` check all view templates in `Views` directory but you can change it like this :
 
 ```php
 $router->setConfig([
@@ -283,7 +288,7 @@ $collection->addRoutes('routes_file_1');
 $collection->addRoutes('routes_file_2'); 
 $collection->setPrefix(['prefix_1','prefix_2']);
 ```
-
+<a name="middleware"></a>
 ### Middleware
 
 Middleware are called after the route target is defined.
@@ -344,7 +349,7 @@ class Global{
 }
 ```
 See the API section to learn how to handle your $route in middleware class.
-
+<a name="response"></a>
 ### Custom Response
 
 If you want to handle custom 404,450... error template, you can do it like this :
@@ -364,7 +369,7 @@ $router->setResponse([
     '404' => 'ErrorController@notfound'
 ]);
 ```
-
+<a name="libraries"></a>
 ### Integration with other libraries
 
 If you want to integrate other template engine libraries like twig, smarty ... you have to set the 'viewCallback' in router.
