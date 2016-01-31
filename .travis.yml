@@ -7,7 +7,6 @@ php:
 before_script:
   - composer self-update
   - composer install
-  - chmod -r 777 /tests
 
 script:
     - vendor/bin/phpunit -c phpunit.xml.dist
