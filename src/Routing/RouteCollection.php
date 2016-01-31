@@ -42,14 +42,11 @@ class RouteCollection
      */
     public function addRoutes($routes = null, $options = [])
     {
-        if(!is_null($routes)) {
-            if (is_string($routes)) {
-                if (strpos($routes, '.php') === false) $routes = trim($routes, '/') . '/';
-                if (is_file($routes . '/routes.php') && is_array($routesFile = include $routes . '/routes.php')) $routes = $routesFile;
-                elseif (is_file($routes) && is_array($routesFile = include $routes)) $routes = $routesFile;
-            }
-            if(!is_array($routes))
-                throw new \InvalidArgumentException('Argument for "' . get_called_class() . '" constructor is not recognized. Accepted argument array and file containing array');
+        if(!is_null($routes) && !is_array($routes)) {
+            if (strpos($routes, '.php') === false) $routes = trim($routes, '/') . '/';
+            if (is_file($routes . '/routes.php') && is_array($routesFile = include $routes . '/routes.php')) $routes = $routesFile;
+            elseif (is_file($routes) && is_array($routesFile = include $routes)) $routes = $routesFile;
+            else throw new \InvalidArgumentException('Argument for "' . get_called_class() . '" constructor is not recognized. Expected argument array or file containing array but "'.$routes.'" given');
         }
         $this->routes['routes_' . $this->countRoutes] = is_array($routes) ? $routes : [];
         $this->routes['path_' . $this->countRoutes] = (isset($options['path'])) ? trim($options['path'], '/') . '/' : '';
