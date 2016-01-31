@@ -34,11 +34,12 @@ class MvcDispatcher
     {
         $reflectionMethod = new ReflectionMethod($this->router->route->getTarget('controller'), $this->router->route->getTarget('action'));
         $dependencies = ($this->router->route->getParameters() == '') ? [] : $this->router->route->getParameters();
-        foreach ($reflectionMethod->getParameters() as $arg)
+        foreach ($reflectionMethod->getParameters() as $arg) {
             if (!is_null($arg->getClass())) {
                 $class = $arg->getClass()->name;
                 array_unshift($dependencies, new $class);
             }
+        }
         $this->router->route->setResponse(['code' => 200, 'message' => 'OK', 'type' => 'text/html']);
         return $reflectionMethod->invokeArgs($this->getController(), $dependencies);
     }

@@ -25,7 +25,7 @@ class RouteCollectionTest extends PHPUnit_Framework_TestCase{
     }
 
     public function testCountRoutes(){
-        $this->collection->addRoutes(__DIR__.'/routes.php','/public');
+        $this->collection->addRoutes(__DIR__.'/Config/routes.php',['prefix'=>'/public']);
         $this->collection->addRoutes([
             '/page-1' => 'index.html',
             '/page-2' => function(){
@@ -47,7 +47,7 @@ class RouteCollectionTest extends PHPUnit_Framework_TestCase{
     }
 
     public function testSetPrefix(){
-        $this->collection->addRoutes(__DIR__.'/routes.php');
+        $this->collection->addRoutes(__DIR__.'/Config/routes.php');
         $this->collection->addRoutes([
             '/page-1' => 'index.html',
             '/page-2' => function(){
@@ -66,7 +66,7 @@ class RouteCollectionTest extends PHPUnit_Framework_TestCase{
      * @expectedException InvalidArgumentException
      */
     public function testInvalidMiddleware(){
-        $this->collection->setMiddleware('middleware.inc.php');
+        $this->collection->setMiddleware('/Config/middleware.inc.php');
     }
 
     /**

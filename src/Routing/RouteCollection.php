@@ -29,29 +29,32 @@ class RouteCollection
 
     /**
      * @param array $routes
-     * @param null $prefix
-     * @throws \Exception
+     * @param array $options
      */
-    public function __construct($routes = null, $prefix = null)
+    public function __construct($routes = null, $options = [])
     {
-        if (!is_null($routes)) $this->addRoutes($routes, $prefix);
+        if (!is_null($routes) || !empty($options)) $this->addRoutes($routes, $options);
     }
 
     /**
      * @param array $routes
-     * @param null $prefix
-     * @throws \Exception
+     * @param array $options
      */
-    public function addRoutes($routes, $prefix = null)
+    public function addRoutes($routes = null, $options = [])
     {
-        if (is_string($routes) && strpos($routes, '.php') === false) $routes = trim($routes, '/') . '/';
-        if (is_array($routes)) $routes = ['', $routes];
-        elseif (is_file($routes . '/routes.php') && is_array($routesFile = include $routes . '/routes.php')) $routes = [$routes, $routesFile];
-        elseif (is_file($routes) && is_array($routesFile = include $routes)) $routes = [str_replace(basename($routes), '', $routes), $routesFile];
-        else throw new \InvalidArgumentException('Argument for "' . get_called_class() . '" constructor is not recognized. Accepted argument array and file containing array');
-        $this->routes['path_' . $this->countRoutes] = $routes[0];
-        if (!is_null($prefix)) $this->routes['prefix_' . $this->countRoutes] = '/' . trim($prefix, '/');
-        $this->routes['routes_' . $this->countRoutes] = $routes[1];
+        if(!is_null($routes)) {
+            if (is_string($routes)) {
+                if (strpos($routes, '.php') === false) $routes = trim($routes, '/') . '/';
+                if (is_file($routes . '/routes.php') && is_array($routesFile = include $routes . '/routes.php')) $routes = $routesFile;
+                elseif (is_file($routes) && is_array($routesFile = include $routes)) $routes = $routesFile;
+            }
+            if(!is_array($routes))
+                throw new \InvalidArgumentException('Argument for "' . get_called_class() . '" constructor is not recognized. Accepted argument array and file containing array');
+        }
+        $this->routes['routes_' . $this->countRoutes] = is_array($routes) ? $routes : [];
+        $this->routes['path_' . $this->countRoutes] = (isset($options['path'])) ? trim($options['path'], '/') . '/' : '';
+        $this->routes['namespace_' . $this->countRoutes] = (isset($options['namespace'])) ? trim($options['namespace'], '\\') . '\\' : '';
+        $this->routes['prefix_' . $this->countRoutes] = (isset($options['prefix'])) ? '/' . trim($options['prefix'], '/') : '';
         $this->countRoutes++;
     }
 
@@ -78,7 +81,24 @@ class RouteCollection
         } elseif (is_string($args))
             for ($i = 0; $i < $this->countRoutes; ++$i)
                 $this->routes['prefix_' . $i] = '/' . trim($args, '/');
+        if($this->countRoutes == 0)$this->countRoutes++;
+    }
 
+    /**
+     * @param $args
+     */
+    public function setOption($args = [])
+    {
+        $nbrArgs = count($args);
+        for ($i = 0; $i < $nbrArgs; ++$i) {
+            if(is_array($args[$i])){
+                $this->routes['path_' . $i] = (isset($args[$i]['path'])) ? trim($args[$i]['path'], '/') . '/' : '';
+                $this->routes['namespace_' . $i] = (isset($args[$i]['namespace'])) ? trim($args[$i]['namespace'], '\\') . '\\' : '';
+                $this->routes['prefix_' . $i] = (isset($args[$i]['prefix'])) ? '/'.trim($args[$i]['prefix'], '/') : '';
+                if(!isset($this->routes['routes_' . $i]))$this->routes['routes_' . $i] = [];
+            }
+        }
+        if($this->countRoutes == 0)$this->countRoutes++;
     }
 
     /**

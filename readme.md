@@ -54,12 +54,27 @@ $router->run();
 #### Smart Routing
 
 With Smart Routing you don't have to define your routes. Depending on the uri it can check if a target exist for the current url.
+But you have to define your views directory path and the namespace for controllers to the collection like this :
+
+```php
+$options = [
+    'path' => '_VIEW_DIR_PATH_',
+    'namespace' => '_CONTROLLERS_NAMESPACE_'
+];
+$collection = new \JetFire\Routing\RouteCollection(null,$options);
+// or
+$collection = new \JetFire\Routing\RouteCollection();
+$collection->setOption($options);
+// or
+$collection = new \JetFire\Routing\RouteCollection();
+$collection->addRoutes(null,$options)
+```
 
 For example if the uri is : `/home/index`
 
 ##### Template matcher
 
-Smart Routing check if an `index.php` file exist in `/Views/Home` directory. By default `Views/` is the directory containing all templates. But you can change it using `setConfig()` function. Look [Views](#views) section for more details.
+Smart Routing check if an `index.php` file exist in `/_VIEW_DIR_PATH_/Home` directory. 
 
 If you want to check for other extension (html,json,...) You can configure the router like this :
 
@@ -74,20 +89,26 @@ $router->setConfig([
 
 ##### Mvc matcher
 
-If Smart Routing failed to find the template then it check if a controller with name `HomeController` has the `index` method.
+If Smart Routing failed to find the template then it checks if a controller with name `HomeController` located in the namespace `_CONTROLLERS_NAMESPACE_` has the `index` method.
+ 
 <a name="array-routing"></a>
 #### Array Routing
 
 With Array Routing you have to add your routes like this :
 
 ```php
+$options = [
+    'path' => '_VIEW_DIR_PATH_',
+    'namespace' => '_CONTROLLERS_NAMESPACE_'
+];
+
 // addRoutes expect an array argument 
 $collection->addRoutes([
 	'/home/index' => '_TARGET_'	
-]);
+],$options);
 
 // or a file containing an array
-$collection->addRoutes('path_to_array_file');
+$collection->addRoutes('path_to_array_file',$options);
 ```
 
 We recommend that you define your routes in a separate file and pass the path to `addRoutes()` method.
@@ -99,7 +120,7 @@ return [
 ];
 ```
 
-You have 3 action possible for Array Routing. We assume you are using a separate file for your routes.
+You have 3 actions possible for Array Routing. We assume you are using a separate file for your routes.
 <a name="template-matching"></a>
 ##### Template Route
 
@@ -136,7 +157,7 @@ return [
 ];
 ```
 
-##### Callback Route
+##### Closure Route
 
 ```php
 return [
@@ -148,13 +169,33 @@ return [
 	
 	// dynamic route with arguments
 	'/home/user-:id-:slug' => [
-		'use' => 'function(){
-			return 'Hello world !';
+		'use' => 'function($id,$slug){
+			return 'Hello User '.$id.'-'.$slug;
 		},
 		'arguments' => ['id' => '[0-9]+','slug' => '[a-z-]*'],
 	],
 
 ];
+```
+
+### Block Routes
+
+With `JetFire\Routing` you have the ability to create block routes to better organize your code.
+For example , if you have an administration for your website , you can create block only for this section and another block to the public part like this :
+
+```php
+// Create RouteCollection instance
+$collection = new \JetFire\Routing\RouteCollection();
+
+// Block routes
+$collection->addRoutes('admin_routes_path',['path' => 'admin_view_path' , 'namespace' => 'admin_controllers_namespace','prefix' => 'admin']);
+$collection->addRoutes('public_routes_path',['path' => 'public_view_path' , 'namespace' => 'public_controllers_namespace']);
+
+// Create an instance of Router
+$router = new \JetFire\Routing\Router($collection)
+
+// Run it!
+$router->run();
 ```
 
 ### Router Configuration
@@ -167,9 +208,6 @@ $router->setConfig([
 	// You can enable/disable a matcher or you can add you custom matcher class 
 	// default matcher are JetFire\Routing\Match\RoutesMatch and JetFire\Routing\Match\SmartMatch
 	'matcher' => ['JetFire\Routing\Match\RoutesMatch', 'JetFire\Routing\Match\SmartMatch'],
-	
-	// Define you custom views directory
-	'viewPath' => 'my_view_path',
 
 	// You can add/remove extension for views
 	// default extension for views
@@ -179,14 +217,26 @@ $router->setConfig([
 	// See the 'Integration with other libraries' section for more details
 	'viewCallback'       => [],
 
-	// If you use a controller to render views, you can specify here your controllers path
-	// default controllers directory is Controllers
-	'controllerPath'     => 'Controllers',
-
 	// See the Named Routes section for more details
 	'generateRoutesPath' => false,
 ]);
 ```
+
+### Collection Options
+
+Here are the list of options that you can edit for each collection routes :
+
+```php
+$options = [
+    // your view directory
+    'path' => 'view_directory',
+    // your controllers namespace
+    'namespace' => 'controllers_namespace',
+    // your routes prefix
+    'prefix' => 'your_prefix'
+];
+```
+
 <a name="named-routes"></a>
 ### Named Routes
 
@@ -210,7 +260,6 @@ return [
 And then to get the url of this route you can do like this :
 
 ```php
-
 // You have to enable generateRoutesPath to get routes url
 $router->setConfig([
 	'generateRoutesPath' => true,
@@ -246,41 +295,14 @@ return [
 	],
 ];
 ```
-<a name="views"></a>
-### Views
-
-By default `JetFire\Router` check all view templates in `Views` directory but you can change it like this :
-
-```php
-$router->setConfig([
-	
-	// Define you custom views directory
-	'viewPath' => 'my_view_path'
-
-	// Other configuration
-	// ...
-]);
-```
-For example if you pass `app/Block/Public/routes.php` to `addRoutes()` function, `JetFire\Router` check if `Views` directory exist in `app/Block/Public/`.
-
-```php
-// call views in app/Block/PublicBlock/Views/ if the Views directory exist
-$collection->addRoutes('app/Block/PublicBlock/routes.php');
-// call views in app/Block/AdminBlock/Views/ if the Views directory exist
-$collection->addRoutes('app/Block/AdminBlock/routes.php');
-// call views in app/Block/UserBlock/Views/ if the Views directory exist
-$collection->addRoutes('app/Block/UserBlock/routes.php');
-```
-
-That way you can separate your views in different blocks.
 
 ### Prefix
 
 You can set a prefix for each routes collection like this :
 
 ```php
-$collection->addRoutes('routes_file_1','prefix_1'); // all routes in routes_file_1 begin with prefix_1/
-$collection->addRoutes('routes_file_2','prefix_2'); // all routes in routes_file_2 begin with prefix_2/
+$collection->addRoutes('routes_file_1',['prefix' => 'prefix_1']); // all routes in routes_file_1 begin with prefix_1/
+$collection->addRoutes('routes_file_2',['prefix' => 'prefix_2']); // all routes in routes_file_2 begin with prefix_2/
 ```
 Or :
 ```php
@@ -291,7 +313,7 @@ $collection->setPrefix(['prefix_1','prefix_2']);
 <a name="middleware"></a>
 ### Middleware
 
-Middleware are called after the route target is defined.
+Middlewares are called after the route target is defined.
 You have to create a middleware config file like this :
 
 ```php
@@ -328,7 +350,7 @@ return [
 ];
 ```
 
-The you have to set the middleware config file to the `RouteCollection` like this :
+Then you have to set the middleware config file to the `RouteCollection` like this :
 
 ```php
 $collection->setMiddleware('your_middleware_file');
@@ -356,7 +378,7 @@ If you want to handle custom 404,450... error template, you can do it like this 
 
 ```php
 $router->setResponse([
-	// you can use an anonymous function to handle error
+	// you can use a closure to handle error
     '404' => function() use ($router){
         $router->route->setResponse('code',404);
         return '404';
@@ -416,11 +438,12 @@ $collection->
 	routesByName								// routes url by their name
 	countRoutes									// count routes block
 	middleware									// middleware config file
-	addRoutes($collection,$prefix = null)		// set your routes
+	addRoutes($collection,$options = [])		// set your routes
 	getRoutes($key = null)						// return all routes
 	getRoutePath($name,$params = []) 			// return the url of route	
 	setPrefix($prefix)							// $prefix can be a string (applied for every collection) 
 												// or an array (for each collection you can specify a prefix)
+    setOption($options = [])                    // set your routes option												
 	setMiddleware($middleware)					// set you middleware config file
 	generateRoutesPath() 						// generate routes url by their name
 

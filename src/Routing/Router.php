@@ -27,18 +27,6 @@ class Router
     public $dispatcher;
 
     /**
-     * @var array
-     */
-    private $config = [
-        'matcher'            => ['JetFire\Routing\Match\RoutesMatch', 'JetFire\Routing\Match\SmartMatch'],
-        'viewPath'           => 'Views',
-        'viewExtension'      => ['.html', '.php', '.json', '.xml'],
-        'viewCallback'       => [],
-        'controllerPath'     => 'Controllers',
-        'generateRoutesPath' => false,
-    ];
-
-    /**
      * @param RouteCollection $collection
      */
     public function __construct(RouteCollection $collection)
@@ -47,13 +35,21 @@ class Router
     }
 
     /**
+     * @var array
+     */
+    private $config = [
+        'matcher'               => ['JetFire\Routing\Match\RoutesMatch', 'JetFire\Routing\Match\SmartMatch'],
+        'viewExtension'         => ['.html', '.php', '.json', '.xml'],
+        'viewCallback'          => [],
+        'generateRoutesPath'    => false,
+    ];
+
+    /**
      * @param array $config
      */
     public function setConfig($config)
     {
         $this->config = array_merge($this->config, $config);
-        if (!empty($this->config['viewPath'])) $this->config['viewPath'] = trim($this->config['viewPath'], '/');
-        if (!empty($this->config['controllerPath'])) $this->config['controllerPath'] = trim($this->config['controllerPath'], '/');
     }
 
     /**

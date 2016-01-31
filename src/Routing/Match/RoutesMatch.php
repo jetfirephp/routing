@@ -40,6 +40,7 @@ class RoutesMatch implements Matcher
             $this->request['prefix'] = ($this->router->collection->getRoutes('prefix_' . $i) != '') ? $this->router->collection->getRoutes('prefix_' . $i) : '';
             foreach ($this->router->collection->getRoutes('routes_' . $i) as $route => $dependencies) {
                 $this->request['path'] = $dependencies;
+                $this->request['index'] = $i;
                 $this->request['route'] = preg_replace_callback('#:([\w]+)#', [$this, 'paramMatch'], '/' . trim(trim($this->request['prefix'], '/') . '/' . trim($route, '/'), '/'));
                 if ($this->routeMatch('#^' . $this->request['route'] . '$#'))
                     return $this->generateTarget();
@@ -135,17 +136,16 @@ class RoutesMatch implements Matcher
         if (!$this->router->route->hasTarget() && strpos($this->router->route->getCallback(), '@') !== false) {
             $routes = explode('@', $this->router->route->getCallback());
             if (!isset($routes[1])) $routes[1] = 'index';
-            if (is_file(($path = $this->router->route->getBlock() . $this->router->getConfig()['controllerPath'] . '/') . $routes[0] . '.php'))
-                require_once $path . $routes[0] . '.php';
-            elseif (is_file(($path = $this->router->getConfig()['controllerPath'] . '/') . $routes[0] . '.php'))
-                require_once $path . $routes[0] . '.php';
-            elseif (!class_exists($routes[0]))
-                throw new \Exception('The require file "' . $routes[0] . '.php" is not found in "' . $path . '"');
-            if (method_exists($routes[0], $routes[1])) {
-                $this->router->route->setTarget(['dispatcher' => 'JetFire\Routing\Dispatcher\MvcDispatcher', 'controller' => $routes[0], 'action' => $routes[1]]);
+            $class = (class_exists($routes[0]))
+                ? $routes[0]
+                : $this->router->collection->getRoutes()['namespace_'.$this->request['index']].$routes[0];
+            if (!class_exists($class))
+                throw new \Exception('Class "' . $class . '." is not found');
+            if (method_exists($class, $routes[1])) {
+                $this->router->route->setTarget(['dispatcher' => 'JetFire\Routing\Dispatcher\MvcDispatcher', 'controller' => $class, 'action' => $routes[1]]);
                 return true;
             }
-            throw new \Exception('The require method "' . $routes[1] . '" is not found in "' . $routes[0] . '"');
+            throw new \Exception('The required method "' . $routes[1] . '" is not found in "' . $class . '"');
         }
         return false;
     }
@@ -157,37 +157,26 @@ class RoutesMatch implements Matcher
     public function template()
     {
         if (!$this->router->route->hasTarget()) {
-            $target = '';
             $path = trim($this->router->route->getCallback(), '/');
             $extension = explode('.', $path);
             $extension = end($extension);
+            $block = $this->router->collection->getRoutes()['path_'.$this->request['index']];
             if (in_array('.' . $extension, $this->router->getConfig()['viewExtension'])) {
-                if (is_file($this->router->route->getBlock() . $this->router->getConfig()['viewPath'] . '/' . $path))
-                    $target = $this->router->route->getBlock() . $this->router->getConfig()['viewPath'] . '/' . $path;
-                elseif (is_file($this->router->getConfig()['viewPath'] . '/' . $path))
-                    $target = $this->router->getConfig()['viewPath'] . '/' . $path;
-                elseif (is_file($path))
-                    $target = $path;
-                else
-                    throw new \Exception('Template file "' . $path . '" is not found in "' . $this->router->getConfig()['viewPath'] . '" or "' . $this->router->route->getBlock() . $this->router->getConfig()['viewPath'] . '"');
-                if (!empty($target)) {
+                if (is_file($block . $path)) {
+                    $target = $block . $path;
                     $this->router->route->setTarget(['dispatcher' => 'JetFire\Routing\Dispatcher\TemplateDispatcher', 'template' => $target,'block' => str_replace($path,'',$target), 'extension' => $extension]);
                     return true;
                 }
+                throw new \Exception('Template file "' . $path . '" is not found in "' . $block . '"');
             } else {
                 foreach ($this->router->getConfig()['viewExtension'] as $ext) {
-                    if (is_file($this->router->route->getBlock() . $this->router->getConfig()['viewPath'] . '/' . $path . $ext))
-                        $target = $this->router->route->getBlock() . $this->router->getConfig()['viewPath'] . '/' . $path . $ext;
-                    elseif (is_file($this->router->getConfig()['viewPath'] . '/' . $path . $ext))
-                        $target = $this->router->getConfig()['viewPath'] . '/' . $path . $ext;
-                    elseif (is_file($path . $ext))
-                        $target = $path . $ext;
-                    if (!empty($target)) {
+                    if (is_file($block . $path . $ext)){
+                        $target = $block . $path . $ext;
                         $this->router->route->setTarget(['dispatcher' => 'JetFire\Routing\Dispatcher\TemplateDispatcher', 'template' => $target,'block' => str_replace($path.$ext,'',$target),  'extension' => str_replace('.', '', $ext)]);
                         return true;
                     }
                 }
-                throw new \Exception('Template file "' . $path . '" is not found in "' . $this->router->getConfig()['viewPath'] . '" or "' . $this->router->route->getBlock() . $this->router->getConfig()['viewPath'] . '"');
+                throw new \Exception('Template file "' . $path . '" is not found in "' .$block . '"');
             }
         }
         return false;

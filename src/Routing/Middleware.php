@@ -55,12 +55,13 @@ class Middleware
      */
     public function classMiddleware()
     {
-        if (isset($this->router->collection->middleware['class_middleware']))
+        if (isset($this->router->collection->middleware['class_middleware'])) {
             $ctrl = str_replace('\\', '/', $this->router->route->getTarget('controller'));
-        if (isset($this->router->collection->middleware['class_middleware'][$ctrl]) && class_exists($this->router->route->getTarget('controller'))) {
-            $class = $this->router->collection->middleware['class_middleware'][$ctrl];
-            $mid_class = new $class;
-            if (method_exists($mid_class, 'handle')) $mid_class->handle($this->router->route);
+            if (isset($this->router->collection->middleware['class_middleware'][$ctrl]) && class_exists($this->router->route->getTarget('controller'))) {
+                $class = $this->router->collection->middleware['class_middleware'][$ctrl];
+                $mid_class = new $class;
+                if (method_exists($mid_class, 'handle')) $mid_class->handle($this->router->route);
+            }
         }
     }
 
