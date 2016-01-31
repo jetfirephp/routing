@@ -162,7 +162,7 @@ class RoutesMatch implements Matcher
             $extension = end($extension);
             $block = $this->router->collection->getRoutes()['path_'.$this->request['index']];
             if (in_array('.' . $extension, $this->router->getConfig()['viewExtension'])) {
-                if (file_exists($block . $path)) {
+                if (is_file($block . $path)) {
                     $target = $block . $path;
                     $this->router->route->setTarget(['dispatcher' => 'JetFire\Routing\Dispatcher\TemplateDispatcher', 'template' => $target,'block' => $block, 'extension' => $extension]);
                     return true;
@@ -170,7 +170,7 @@ class RoutesMatch implements Matcher
                 throw new \Exception('Template file "' . $path . '" is not found in "' . $block . '"');
             } else {
                 foreach ($this->router->getConfig()['viewExtension'] as $ext) {
-                    if (file_exists($block . $path . $ext)){
+                    if (is_file($block . $path . $ext)){
                         $target = $block . $path . $ext;
                         $this->router->route->setTarget(['dispatcher' => 'JetFire\Routing\Dispatcher\TemplateDispatcher', 'template' => $target,'block' => $block,  'extension' => str_replace('.', '', $ext)]);
                         return true;
