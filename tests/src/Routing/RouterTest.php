@@ -31,7 +31,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
             'namespace' => 'JetFire\Routing\Test\Block1',
             'prefix' => 'block1'
         ]);
-        $collection->addRoutes(__DIR__.'/Block2/',[
+        $collection->addRoutes(__DIR__.'/Block2/routes.php',[
             'path' => __DIR__.'/Block2/',
             'namespace' => 'JetFire\Routing\Test\Block2\Controllers'
         ]);
