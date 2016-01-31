@@ -48,10 +48,10 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $this->router->setUrl('/app/index');
         $this->assertTrue($this->router->match());
         $this->router->callTarget();
-        /*$this->router->setUrl('/smart/index');
+        $this->router->setUrl('/smart/index');
         $this->assertTrue($this->router->match());
-        $this->router->callTarget();*/
-        $this->expectOutputString('Index');
+        $this->router->callTarget();
+        $this->expectOutputString('IndexSmart');
     }
 
     public function testSmartMatchNamespaceWithoutRoutes(){
@@ -70,16 +70,16 @@ class RouterTest extends PHPUnit_Framework_TestCase
     public function testSmartMatchTemplate()
     {
         $_SERVER['REQUEST_METHOD'] = 'GET';
-        /*$this->router->setUrl('/smart/index');
+        $this->router->setUrl('/smart/index');
         $this->assertTrue($this->router->match());
-        $this->router->callTarget();*/
+        $this->router->callTarget();
         $this->router->setUrl('/block1/smart/index1');
         $this->assertTrue($this->router->match());
         $this->router->callTarget();
         $this->router->setUrl('/smart/index2');
         $this->assertTrue($this->router->match());
         $this->router->callTarget();
-        $this->expectOutputString('Smart1Smart2');
+        $this->expectOutputString('SmartSmart1Smart2');
     }
 
     public function testSmartMatchController()
@@ -116,31 +116,31 @@ class RouterTest extends PHPUnit_Framework_TestCase
     public function testMatchStaticTemplate()
     {
         $_SERVER['REQUEST_METHOD'] = 'GET';
-       /* $this->router->setUrl('/index');
+        $this->router->setUrl('/index');
         $this->assertTrue($this->router->match());
-        $this->router->callTarget();*/
+        $this->router->callTarget();
         $this->router->setUrl('/block1/index1');
         $this->assertTrue($this->router->match());
         $this->router->callTarget();
         $this->router->setUrl('/index2');
         $this->assertTrue($this->router->match());
         $this->router->callTarget();
-        $this->expectOutputString('Hello1Hello2');
+        $this->expectOutputString('HelloHello1Hello2');
     }
 
     public function testMatchDynamicTemplate()
     {
         $_SERVER['REQUEST_METHOD'] = 'GET';
-        /*$this->router->setUrl('/user-1');
+        $this->router->setUrl('/user-1');
         $this->assertTrue($this->router->match());
-        $this->router->callTarget();*/
+        $this->router->callTarget();
         $this->router->setUrl('/block1/user1-1');
         $this->assertTrue($this->router->match());
         $this->router->callTarget();
         $this->router->setUrl('/user2-1');
         $this->assertTrue($this->router->match());
         $this->router->callTarget();
-        $this->expectOutputString('User1User2');
+        $this->expectOutputString('UserUser1User2');
     }
 
     /**
