@@ -41,13 +41,14 @@ class SmartMatch implements Matcher
      */
     private function matchTemplate()
     {
-        foreach ($this->router->getConfig()['viewExtension'] as $extension)
+        foreach ($this->router->getConfig()['viewExtension'] as $extension) {
             for ($i = 0; $i < $this->router->collection->countRoutes; ++$i)
-                if (is_file(($template = $this->router->collection->getRoutes('path_' . $i) . str_replace($this->router->collection->getRoutes('prefix_' . $i),'',$this->router->route->getUrl()) . $extension))) {
+                if (is_file(($template = rtrim($this->router->collection->getRoutes('path_' . $i),'/') . ltrim(str_replace($this->router->collection->getRoutes('prefix_' . $i), '', $this->router->route->getUrl()) . $extension)))) {
                     $this->router->route->setTarget(['dispatcher' => 'JetFire\Routing\Dispatcher\TemplateDispatcher', 'template' => $template, 'extension' => str_replace('.', '', $extension)]);
                     $this->router->route->addDetail('block', $this->router->collection->getRoutes('path_' . $i));
                     return true;
                 }
+        }
         return false;
     }
 

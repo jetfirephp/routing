@@ -89,7 +89,7 @@ class RouteCollection
         $nbrArgs = count($args);
         for ($i = 0; $i < $nbrArgs; ++$i) {
             if(is_array($args[$i])){
-                $this->routes['path_' . $i] = (isset($args[$i]['path'])) ? trim($args[$i]['path'], '/') . '/' : '';
+                $this->routes['path_' . $i] = (isset($args[$i]['path'])) ? rtrim($args[$i]['path'], '/') . '/' : '';
                 $this->routes['namespace_' . $i] = (isset($args[$i]['namespace'])) ? trim($args[$i]['namespace'], '\\') . '\\' : '';
                 $this->routes['prefix_' . $i] = (isset($args[$i]['prefix'])) ? '/'.trim($args[$i]['prefix'], '/') : '';
                 if(!isset($this->routes['routes_' . $i]))$this->routes['routes_' . $i] = [];
