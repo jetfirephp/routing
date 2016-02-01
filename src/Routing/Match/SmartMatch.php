@@ -43,11 +43,11 @@ class SmartMatch implements Matcher
     {
         foreach ($this->router->getConfig()['viewExtension'] as $extension) {
             for ($i = 0; $i < $this->router->collection->countRoutes; ++$i) {
-                $url = explode('/', $this->router->route->getUrl());
+                $url = explode('/', str_replace($this->router->collection->getRoutes('prefix_' . $i), '',$this->router->route->getUrl()));
                 $end = array_pop($url);
                 $url = implode('/', array_map('ucwords', $url));
                 $url .= '/'.$end;
-                if (is_file(($template = rtrim($this->router->collection->getRoutes('path_' . $i), '/') . str_replace($this->router->collection->getRoutes('prefix_' . $i), '', $url) . $extension))) {
+                if (is_file(($template = rtrim($this->router->collection->getRoutes('path_' . $i), '/') . $url . $extension))) {
                     $this->router->route->setTarget(['dispatcher' => 'JetFire\Routing\Dispatcher\TemplateDispatcher', 'template' => $template, 'extension' => str_replace('.', '', $extension)]);
                     $this->router->route->addDetail('block', $this->router->collection->getRoutes('path_' . $i));
                     return true;
