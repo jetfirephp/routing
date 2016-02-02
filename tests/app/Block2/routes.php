@@ -10,7 +10,7 @@ return [
     ],
 
 	'/home2'	=> [
-		'use' => 'JetFire\Routing\Test\Block2\Controllers\Namespace2Controller@index',
+		'use' => 'JetFire\Routing\App\Block2\Controllers\Namespace2Controller@index',
 	],
 
     '/home-:id'	=> [

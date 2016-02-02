@@ -1,13 +1,13 @@
 <?php
 
-namespace JetFire\Routing\Test;
+namespace JetFire\Routing\App;
 use JetFire\Routing\RouteCollection;
 use JetFire\Routing\Router;
 use PHPUnit_Framework_TestCase;
 
 /**
  * Class Router
- * @package JetFire\Routing\Test
+ * @package JetFire\Routing\App
  */
 class RouterTest extends PHPUnit_Framework_TestCase
 {
@@ -22,180 +22,161 @@ class RouterTest extends PHPUnit_Framework_TestCase
     public function setUp()
     {
         $collection = new RouteCollection();
-        $collection->addRoutes(__DIR__.'/Config/routes.php',[
-            'path' => __DIR__.'/Views',
-            'namespace' => 'JetFire\Routing\Test\Controllers',
+        $collection->addRoutes(ROOT.'/Config/routes.php',[
+            'path' => ROOT.'/Views',
+            'namespace' => 'JetFire\Routing\App\Controllers',
         ]);
-        $collection->addRoutes(__DIR__.'/Block1/routes.php',[
-            'path' => __DIR__.'/Block1/Views',
-            'namespace' => 'JetFire\Routing\Test\Block1',
+        $collection->addRoutes(ROOT.'/Block1/routes.php',[
+            'path' => ROOT.'/Block1/Views',
+            'namespace' => 'JetFire\Routing\App\Block1',
             'prefix' => 'block1'
         ]);
-        $collection->addRoutes(__DIR__.'/Block2/routes.php',[
-            'path' => __DIR__.'/Block2/',
-            'namespace' => 'JetFire\Routing\Test\Block2\Controllers'
+        $collection->addRoutes(ROOT.'/Block2/routes.php',[
+            'path' => ROOT.'/Block2/',
+            'namespace' => 'JetFire\Routing\App\Block2\Controllers'
         ]);
         $this->router = new Router($collection);
     }
 
-    public function testSmartMatchWithoutRoutes(){
+    public function smartMatchWithoutRoutesProvider()
+    {
+        return array(
+            array(ROOT.'/Views','JetFire\Routing\App\Controllers','/app/index', 'Index',''),
+            array(ROOT.'/Views','JetFire\Routing\App\Controllers','/smart/index', 'Smart',''),
+            array(ROOT.'/Block1/Views','JetFire\Routing\App\Block1','/smart/index1', 'Smart1',''),
+            array(ROOT.'/Block1/Views','JetFire\Routing\App\Block1','/block1/namespace1/index', 'Index1','block1'),
+            array(ROOT.'/Block2','JetFire\Routing\App\Block2\Controllers','/smart/index2', 'Smart2',''),
+            array(ROOT.'/Block2','JetFire\Routing\App\Block2\Controllers','/normal2/contact', 'Contact2',''),
+            array(ROOT.'/Views','JetFire\Routing\App\Controllers','/app/namespace/index', 'Index','app'),
+        );
+    }
+
+    /**
+     * @dataProvider smartMatchWithoutRoutesProvider
+     * @param $path
+     * @param $namespace
+     * @param $url
+     * @param $output
+     * @param $prefix
+     */
+    public function testSmartMatchWithoutRoutes($path,$namespace,$url,$output,$prefix){
         $collection = new RouteCollection(null,[
-            'path' => __DIR__.'/Views',
-            'namespace' => 'JetFire\Routing\Test\Controllers'
+            'path' => $path,
+            'namespace' => $namespace,
+            'prefix' => $prefix
         ]);
         $this->router = new Router($collection);
         $_SERVER['REQUEST_METHOD'] = 'GET';
-        $this->router->setUrl('/app/index');
+        $this->router->setUrl($url);
         $this->assertTrue($this->router->match());
         $this->router->callTarget();
-        $this->router->setUrl('/smart/index');
-        $this->assertTrue($this->router->match());
-        $this->router->callTarget();
-        $this->expectOutputString('IndexSmart');
+        $this->expectOutputString($output);
     }
 
-    public function testSmartMatchNamespaceWithoutRoutes(){
-        $collection = new RouteCollection();
-        $collection->setOption([
-            ['path' => __DIR__.'/Views', 'namespace' => 'JetFire\Routing\Test\Controllers','prefix'=>'app'],
-        ]);
-        $this->router = new Router($collection);
-        $_SERVER['REQUEST_METHOD'] = 'GET';
-        $this->router->setUrl('/app/namespace/index');
-        $this->assertTrue($this->router->match());
-        $this->router->callTarget();
-        $this->expectOutputString('Index');
-    }
-
-    public function testSmartMatchTemplate()
+    public function smartMatchTemplate()
     {
-        $_SERVER['REQUEST_METHOD'] = 'GET';
-        $this->router->setUrl('/smart/index');
-        $this->assertTrue($this->router->match());
-        $this->router->callTarget();
-        $this->router->setUrl('/block1/smart/index1');
-        $this->assertTrue($this->router->match());
-        $this->router->callTarget();
-        $this->router->setUrl('/smart/index2');
-        $this->assertTrue($this->router->match());
-        $this->router->callTarget();
-        $this->expectOutputString('SmartSmart1Smart2');
-    }
-
-    public function testSmartMatchController()
-    {
-        $_SERVER['REQUEST_METHOD'] = 'GET';
-        $this->router->setUrl('/normal/contact');
-        $this->assertTrue($this->router->match());
-        $this->router->callTarget();
-        $this->router->setUrl('/block1/normal1/contact');
-        $this->assertTrue($this->router->match());
-        $this->router->callTarget();
-        $this->router->setUrl('/normal2/contact');
-        $this->assertTrue($this->router->match());
-        $this->router->callTarget();
-        $this->expectOutputString('ContactContact1Contact2');
-    }
-
-    public function testSmartMatchNamespaceController()
-    {
-        $_SERVER['REQUEST_METHOD'] = 'GET';
-        $this->router->setUrl('/namespace/index');
-        $this->assertTrue($this->router->match());
-        $this->router->callTarget();
-        $this->router->setUrl('/namespace1/index');
-        $this->assertTrue($this->router->match());
-        $this->router->callTarget();
-        $this->router->setUrl('/namespace2/index');
-        $this->assertTrue($this->router->match());
-        $this->router->callTarget();
-        $this->expectOutputString('IndexIndex1Index2');
-    }
-
-
-    public function testMatchStaticTemplate()
-    {
-        $_SERVER['REQUEST_METHOD'] = 'GET';
-        $this->router->setUrl('/index');
-        $this->assertTrue($this->router->match());
-        $this->router->callTarget();
-        $this->router->setUrl('/block1/index1');
-        $this->assertTrue($this->router->match());
-        $this->router->callTarget();
-        $this->router->setUrl('/index2');
-        $this->assertTrue($this->router->match());
-        $this->router->callTarget();
-        $this->expectOutputString('HelloHello1Hello2');
-    }
-
-    public function testMatchDynamicTemplate()
-    {
-        $_SERVER['REQUEST_METHOD'] = 'GET';
-        $this->router->setUrl('/user-1');
-        $this->assertTrue($this->router->match());
-        $this->router->callTarget();
-        $this->router->setUrl('/block1/user1-1');
-        $this->assertTrue($this->router->match());
-        $this->router->callTarget();
-        $this->router->setUrl('/user2-1');
-        $this->assertTrue($this->router->match());
-        $this->router->callTarget();
-        $this->expectOutputString('UserUser1User2');
+        return array(
+          array('/smart/index','Smart'),
+          array('/block1/smart/index1','Smart1'),
+          array('/smart/index2','Smart2'),
+        );
     }
 
     /**
-     * @return mixed
+     * @dataProvider smartMatchTemplate
+     * @param $url
+     * @param $output
      */
-    public function testMatchNamespaceController()
+    public function testSmartMatchTemplate($url,$output)
     {
         $_SERVER['REQUEST_METHOD'] = 'GET';
-        $this->router->setUrl('/home');
+        $this->router->setUrl($url);
         $this->assertTrue($this->router->match());
         $this->router->callTarget();
-        $this->router->setUrl('/block1/home1');
-        $this->assertTrue($this->router->match());
-        $this->router->callTarget();
-        $this->router->setUrl('/home2');
-        $this->assertTrue($this->router->match());
-        $this->router->callTarget();
-        $this->expectOutputString('IndexIndex1Index2');
+        $this->expectOutputString($output);
+    }
+
+    public function smartMatchController()
+    {
+        return array(
+            array('/normal/contact','Contact'),
+            array('/block1/normal1/contact','Contact1'),
+            array('/normal2/contact','Contact2'),
+            array('/namespace/index','Index'),
+            array('/namespace1/index','Index1'),
+            array('/namespace2/index','Index2'),
+        );
     }
 
     /**
-     * @return mixed
+     * @dataProvider smartMatchController
+     * @param $url
+     * @param $output
      */
-    public function testMatchNamespace2Controller()
+    public function testSmartMatchController($url,$output)
     {
         $_SERVER['REQUEST_METHOD'] = 'GET';
-        $this->router->setUrl('/home-1');
+        $this->router->setUrl($url);
         $this->assertTrue($this->router->match());
         $this->router->callTarget();
-        $this->router->setUrl('/block1/home-2');
-        $this->assertTrue($this->router->match());
-        $this->router->callTarget();
-        $this->router->setUrl('/home-3');
-        $this->assertTrue($this->router->match());
-        $this->router->callTarget();
-        $this->expectOutputString('Index1Index2Index3');
+        $this->expectOutputString($output);
+    }
+
+    public function matchTemplate()
+    {
+        return array(
+            array('/index','Hello'),
+            array('/block1/index1','Hello1'),
+            array('/index2','Hello2'),
+            array('/user-1','User'),
+            array('/block1/user1-1','User1'),
+            array('/user2-1','User2'),
+        );
     }
 
     /**
-     * @return mixed
+     * @dataProvider matchTemplate
+     * @param $url
+     * @param $output
      */
-    public function testMatchNoNamespaceController()
+    public function testMatchTemplate($url,$output)
     {
         $_SERVER['REQUEST_METHOD'] = 'GET';
-        $this->router->setUrl('/contact');
+        $this->router->setUrl($url);
         $this->assertTrue($this->router->match());
         $this->router->callTarget();
-        $this->router->setUrl('/block1/contact1');
-        $this->assertTrue($this->router->match());
-        $this->router->callTarget();
-        $this->router->setUrl('/contact2');
-        $this->assertTrue($this->router->match());
-        $this->router->callTarget();
-        $this->expectOutputString('ContactContact1Contact2');
+        $this->expectOutputString($output);
     }
+
+    public function matchController()
+    {
+        return array(
+            array('/home','Index'),
+            array('/block1/home1','Index1'),
+            array('/home2','Index2'),
+            array('/home-1','Index1'),
+            array('/block1/home-2','Index2'),
+            array('/home-3','Index3'),
+            array('/contact','Contact'),
+            array('/block1/contact1','Contact1'),
+            array('/contact2','Contact2'),
+        );
+    }
+
+    /**
+     * @dataProvider matchController
+     * @param $url
+     * @param $output
+     */
+    public function testMatchController($url,$output)
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $this->router->setUrl($url);
+        $this->assertTrue($this->router->match());
+        $this->router->callTarget();
+        $this->expectOutputString($output);
+    }
+
 
     public function testResponseMethod(){
         $_SERVER['REQUEST_METHOD'] = 'POST';

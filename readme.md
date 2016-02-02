@@ -50,6 +50,10 @@ $router = new \JetFire\Routing\Router($collection)
 // Run it!
 $router->run();
 ```
+### Matcher
+
+`JetFire\Routing` provide 2 type of matcher for your routes : `JetFire\Routing\Match\RoutesMatch` and `JetFire\Routing\Match\SmartMatch`
+
 <a name="smart-routing"></a>
 #### Smart Routing
 
@@ -90,6 +94,25 @@ $router->setConfig([
 ##### Mvc matcher
 
 If Smart Routing failed to find the template then it checks if a controller with name `HomeController` located in the namespace `_CONTROLLERS_NAMESPACE_` has the `index` method.
+Smart Routing support also dynamic routes. For example if the uri is : `/home/user/peter/parker` then you must have a method `user` with two parameters like this :
+
+```php
+class HomeController {
+    public function user($firstName,$lastName){
+        // $firstName = peter
+        // $lasstName = parker
+    }
+}
+```
+
+If you want to disable SmartRouting you have to remove 'JetFire\Routing\Match\SmartMatch' from your router configuration :
+
+```php
+$router->setConfig([
+    // default : 'matcher' => ['JetFire\Routing\Match\RoutesMatch', 'JetFire\Routing\Match\SmartMatch']
+	'matcher' => ['JetFire\Routing\Match\RoutesMatch'],
+]);
+```
  
 <a name="array-routing"></a>
 #### Array Routing

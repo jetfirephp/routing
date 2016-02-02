@@ -25,7 +25,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "JetFire\\Routing\\Test\\": "tests/src/Routing/"
+            "JetFire\\Routing\\Test\\": "tests/src/Routing/",
+            "JetFire\\Routing\\App\\": "tests/app/"
         }
     },
     "minimum-stability": "dev"

@@ -49,9 +49,9 @@ class RouteCollection
             else throw new \InvalidArgumentException('Argument for "' . get_called_class() . '" constructor is not recognized. Expected argument array or file containing array but "'.$routes.'" given');
         }
         $this->routes['routes_' . $this->countRoutes] = is_array($routes) ? $routes : [];
-        $this->routes['path_' . $this->countRoutes] = (isset($options['path'])) ? rtrim($options['path'], '/') . '/' : '';
-        $this->routes['namespace_' . $this->countRoutes] = (isset($options['namespace'])) ? trim($options['namespace'], '\\') . '\\' : '';
-        $this->routes['prefix_' . $this->countRoutes] = (isset($options['prefix'])) ? '/' . trim($options['prefix'], '/') : '';
+        $this->routes['path_' . $this->countRoutes] = (isset($options['path']) && !empty($options['path'])) ? rtrim($options['path'], '/') . '/' : '';
+        $this->routes['namespace_' . $this->countRoutes] = (isset($options['namespace']) && !empty($options['namespace'])) ? trim($options['namespace'], '\\') . '\\' : '';
+        $this->routes['prefix_' . $this->countRoutes] = (isset($options['prefix']) && !empty($options['prefix'])) ? '/' . trim($options['prefix'], '/') : '';
         $this->countRoutes++;
     }
 
@@ -89,9 +89,9 @@ class RouteCollection
         $nbrArgs = count($args);
         for ($i = 0; $i < $nbrArgs; ++$i) {
             if(is_array($args[$i])){
-                $this->routes['path_' . $i] = (isset($args[$i]['path'])) ? rtrim($args[$i]['path'], '/') . '/' : '';
-                $this->routes['namespace_' . $i] = (isset($args[$i]['namespace'])) ? trim($args[$i]['namespace'], '\\') . '\\' : '';
-                $this->routes['prefix_' . $i] = (isset($args[$i]['prefix'])) ? '/'.trim($args[$i]['prefix'], '/') : '';
+                $this->routes['path_' . $i] = (isset($args[$i]['path']) && !empty($args[$i]['path'])) ? rtrim($args[$i]['path'], '/') . '/' : '';
+                $this->routes['namespace_' . $i] = (isset($args[$i]['namespace']) && !empty($args[$i]['namespace'])) ? trim($args[$i]['namespace'], '\\') . '\\' : '';
+                $this->routes['prefix_' . $i] = (isset($args[$i]['prefix']) && !empty($args[$i]['prefix'])) ? '/'.trim($args[$i]['prefix'], '/') : '';
                 if(!isset($this->routes['routes_' . $i]))$this->routes['routes_' . $i] = [];
             }
         }

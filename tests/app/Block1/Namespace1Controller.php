@@ -1,10 +1,10 @@
 <?php
-namespace JetFire\Routing\Test\Block2\Controllers;
+namespace JetFire\Routing\App\Block1;
 
-class Namespace2Controller {
+class Namespace1Controller {
 
     public function index(){
-        echo 'Index2';
+        echo 'Index1';
     }
 
     public function index2($id){
