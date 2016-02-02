@@ -32,6 +32,7 @@ class Router
     public function __construct(RouteCollection $collection)
     {
         $this->collection = $collection;
+        $this->route = new Route();
     }
 
     /**
@@ -79,7 +80,6 @@ class Router
      */
     public function setUrl($url = null)
     {
-        $this->route = new Route();
         if (is_null($url))
             $url = (isset($_GET['url'])) ? $_GET['url'] : substr(str_replace(str_replace('/index.php', '', $_SERVER['SCRIPT_NAME']), '', $_SERVER['REQUEST_URI']), 1);
         $this->route->setUrl('/' . trim(explode('?', $url)[0], '/'));

@@ -28,4 +28,8 @@ return [
 		'method' => 'POST',
         'name' => 'search'
 	],
+
+    '/log' => function(){
+
+    }
 ];

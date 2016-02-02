@@ -35,6 +35,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
             'path' => ROOT.'/Block2/',
             'namespace' => 'JetFire\Routing\App\Block2\Controllers'
         ]);
+        $_SERVER['REQUEST_METHOD'] = 'GET';
         $this->router = new Router($collection);
     }
 
@@ -66,7 +67,6 @@ class RouterTest extends PHPUnit_Framework_TestCase
             'prefix' => $prefix
         ]);
         $this->router = new Router($collection);
-        $_SERVER['REQUEST_METHOD'] = 'GET';
         $this->router->setUrl($url);
         $this->assertTrue($this->router->match());
         $this->router->callTarget();
@@ -89,7 +89,6 @@ class RouterTest extends PHPUnit_Framework_TestCase
      */
     public function testSmartMatchTemplate($url,$output)
     {
-        $_SERVER['REQUEST_METHOD'] = 'GET';
         $this->router->setUrl($url);
         $this->assertTrue($this->router->match());
         $this->router->callTarget();
@@ -115,7 +114,6 @@ class RouterTest extends PHPUnit_Framework_TestCase
      */
     public function testSmartMatchController($url,$output)
     {
-        $_SERVER['REQUEST_METHOD'] = 'GET';
         $this->router->setUrl($url);
         $this->assertTrue($this->router->match());
         $this->router->callTarget();
@@ -141,7 +139,6 @@ class RouterTest extends PHPUnit_Framework_TestCase
      */
     public function testMatchTemplate($url,$output)
     {
-        $_SERVER['REQUEST_METHOD'] = 'GET';
         $this->router->setUrl($url);
         $this->assertTrue($this->router->match());
         $this->router->callTarget();
@@ -170,28 +167,40 @@ class RouterTest extends PHPUnit_Framework_TestCase
      */
     public function testMatchController($url,$output)
     {
-        $_SERVER['REQUEST_METHOD'] = 'GET';
         $this->router->setUrl($url);
         $this->assertTrue($this->router->match());
         $this->router->callTarget();
         $this->expectOutputString($output);
     }
 
-
-    public function testResponseMethod(){
+    public function testPostResponseMethod(){
+        $collection = new RouteCollection();
+        $collection->addRoutes(ROOT.'/Config/routes.php',[
+            'path' => ROOT.'/Views',
+            'namespace' => 'JetFire\Routing\App\Controllers',
+        ]);
         $_SERVER['REQUEST_METHOD'] = 'POST';
-        $this->router->setUrl('/search');
-        $this->assertTrue( $this->router->match());
-        $this->router->callTarget();
-        $this->assertEquals('POST', $this->router->route->getMethod());
+        $router = new Router($collection);
+        $router->setUrl('/search');
+        $this->assertTrue( $router->match());
+        $router->callTarget();
+        $this->assertEquals('POST', $router->route->getMethod());
+    }
+
+    public function testGetResponseMethod(){
+        $collection = new RouteCollection();
+        $collection->addRoutes(ROOT.'/Config/routes.php',[
+            'path' => ROOT.'/Views',
+            'namespace' => 'JetFire\Routing\App\Controllers',
+        ]);
+        $router = new Router($collection);
         $_SERVER['REQUEST_METHOD'] = 'GET';
-        $this->router->setUrl('/search');
-        $this->assertFalse( $this->router->match());
-        $this->assertEquals(405, $this->router->route->getResponse('code'));
+        $router->setUrl('/search');
+        $this->assertFalse( $router->match());
+        $this->assertEquals(405, $router->route->getResponse('code'));
     }
 
     public function testClosureWithParameters(){
-        $_SERVER['REQUEST_METHOD'] = 'GET';
         $this->router->setUrl('/block1/search1-3-peter');
         $this->assertTrue( $this->router->match());
         $this->router->callTarget();

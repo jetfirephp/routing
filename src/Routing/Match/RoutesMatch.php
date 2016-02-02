@@ -56,9 +56,9 @@ class RoutesMatch implements Matcher
      */
     private function paramMatch($match)
     {
-        if (isset($this->request['arguments']) && isset($this->request['arguments'][$match[1]])) {
-            $this->request['arguments'][$match[1]] = str_replace('(', '(?:', $this->request['arguments'][$match[1]]);
-            return '(' . $this->request['arguments'][$match[1]] . ')';
+        if (is_array($this->request['path']) && isset($this->request['path']['arguments'][$match[1]])) {
+            $this->request['path']['arguments'][$match[1]] = str_replace('(', '(?:', $this->request['path']['arguments'][$match[1]]);
+            return '(' . $this->request['path']['arguments'][$match[1]] . ')';
         }
         return '([^/]+)';
     }
@@ -86,20 +86,22 @@ class RoutesMatch implements Matcher
      */
     private function generateTarget()
     {
-        if (isset($this->request['path']['name'])) $this->router->route->setName($this->request['path']['name']);
-        if (isset($this->request['path']['method'])) $this->request['path']['method'] = is_array($this->request['path']['method']) ? $this->request['path']['method'] : [$this->request['path']['method']];
-        if (isset($this->request['path']))
-            (is_array($this->request['path']) && isset($this->request['path']['use']))
-                ? $this->router->route->setCallback($this->request['path']['use'])
-                : $this->router->route->setCallback($this->request['path']);
-        $this->router->route->setDetail($this->request);
-        if ($this->validMethod()) {
-            $this->router->route->setResponse(['code' => 202, 'message' => 'Accepted']);
+        if(is_callable($this->request['path'])){
+            $this->router->route->setCallback($this->request['path']);
+            $this->router->route->setDetail($this->request);
             $this->anonymous();
-            $this->mvc();
-            $this->template();
-        } else
-            $this->router->route->setResponse(['code' => 405, 'message' => 'Method Not Allowed']);
+        } else {
+            if (isset($this->request['path']['name'])) $this->router->route->setName($this->request['path']['name']);
+            if (isset($this->request['path']['method'])) $this->request['path']['method'] = is_array($this->request['path']['method']) ? $this->request['path']['method'] : [$this->request['path']['method']];
+            if (isset($this->request['path']))
+                (is_array($this->request['path']) && isset($this->request['path']['use']))
+                    ? $this->router->route->setCallback($this->request['path']['use'])
+                    : $this->router->route->setCallback($this->request['path']);
+            $this->router->route->setDetail($this->request);
+            ($this->validMethod() && ($this->anonymous() || $this->mvc() || $this->template()))
+                ? $this->router->route->setResponse(['code' => 202, 'message' => 'Accepted'])
+                : $this->router->route->setResponse(['code' => 405, 'message' => 'Method Not Allowed']);
+        }
         return $this->router->route->hasTarget();
     }
 
