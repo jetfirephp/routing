@@ -104,7 +104,7 @@ class RouteCollection
      */
     public function setMiddleware($middleware)
     {
-        if (is_string($middleware)) $middleware = trim($middleware, '/');
+        if (is_string($middleware)) $middleware = rtrim($middleware, '/');
         if (is_file($middleware) && is_array($mid = include $middleware))
             $this->middleware = $mid;
         elseif (is_array($middleware))
