@@ -30,6 +30,6 @@ return [
 	],
 
     '/log' => function(){
-
+        echo 'yes';
     }
 ];

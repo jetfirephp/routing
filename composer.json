@@ -18,6 +18,9 @@
         "phpunit/phpunit": "4.8.*",
         "symfony/yaml": "v2.8.2"
     },
+    "suggest": {
+        "jetfire/autoload": "For loading your class"
+    },
     "autoload": {
         "psr-4":{
             "JetFire\\Routing\\": "src/Routing/"

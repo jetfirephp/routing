@@ -62,7 +62,8 @@ class SmartMatch implements Matcher
     private function matchMvc()
     {
         $routes = array_slice(explode('/', $this->router->route->getUrl()), 1);
-        for ($i = 0; $i < $this->router->collection->countRoutes; ++$i) {
+        $i = 0;
+        do{
             $route =  ('/' . $routes[0] == $this->router->collection->getRoutes('prefix_' . $i))
                 ? array_slice($routes, 1) : $routes;
             if (isset($route[0])) {
@@ -75,7 +76,8 @@ class SmartMatch implements Matcher
                     return true;
                 }
             }
-        }
+            ++$i;
+        }while($i < $this->router->collection->countRoutes);
         return false;
     }
 

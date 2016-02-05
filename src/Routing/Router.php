@@ -43,6 +43,7 @@ class Router
         'viewExtension'         => ['.html', '.php', '.json', '.xml'],
         'viewCallback'          => [],
         'generateRoutesPath'    => false,
+        'basePath'              => ''
     ];
 
     /**
@@ -131,7 +132,7 @@ class Router
     /**
      * @description set response code
      */
-    private function callResponse()
+    public function callResponse()
     {
         if (isset($this->route->getResponse()['templates']) && isset($this->route->getResponse()['templates'][$this->route->getResponse('code')])) {
             $this->route->setCallback($this->route->getResponse()['templates'][$this->route->getResponse('code')]);

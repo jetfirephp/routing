@@ -30,9 +30,9 @@ class FunctionDispatcher
      */
     public function call()
     {
-        $this->router->route->setResponse(['code' => 200, 'message' => 'OK', 'type' => 'text/html']);
+        if ($this->router->route->getResponse('code') == 202) $this->router->route->setResponse(['code' => 200, 'message' => 'OK', 'type' => 'text/html']);
         $params = ($this->router->route->getParameters() == '') ? [] : $this->router->route->getParameters();
-        echo call_user_func_array($this->router->route->getTarget('function'), $params);
+        echo call_user_func_array($this->router->route->getTarget('closure'), $params);
     }
 
 } 

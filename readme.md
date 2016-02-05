@@ -94,6 +94,7 @@ $router->setConfig([
 ##### Mvc matcher
 
 If Smart Routing failed to find the template then it checks if a controller with name `HomeController` located in the namespace `_CONTROLLERS_NAMESPACE_` has the `index` method.
+You have to require your controller before matching or you can use your custom autoloader to load your controllers.
 Smart Routing support also dynamic routes. For example if the uri is : `/home/user/peter/parker` then you must have a method `user` with two parameters like this :
 
 ```php
@@ -402,8 +403,7 @@ If you want to handle custom 404,450... error template, you can do it like this 
 ```php
 $router->setResponse([
 	// you can use a closure to handle error
-    '404' => function() use ($router){
-        $router->route->setResponse('code',404);
+    '404' => function(){
         return '404';
     },
     

@@ -40,7 +40,8 @@ class MvcDispatcher
                 array_unshift($dependencies, new $class);
             }
         }
-        $this->router->route->setResponse(['code' => 200, 'message' => 'OK', 'type' => 'text/html']);
+        if ($this->router->route->getResponse('code') == 202)
+            $this->router->route->setResponse(['code' => 200, 'message' => 'OK', 'type' => 'text/html']);
         return $reflectionMethod->invokeArgs($this->getController(), $dependencies);
     }
 

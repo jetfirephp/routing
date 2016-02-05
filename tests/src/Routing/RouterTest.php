@@ -207,4 +207,23 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $this->expectOutputString('Search3peter');
     }
 
+    public function testClosure(){
+        $this->router->setUrl('/log');
+        $this->assertTrue( $this->router->match());
+        $this->router->callTarget();
+        $this->expectOutputString('yes');
+    }
+
+    public function testResponse(){
+        $this->router->setResponse([
+            '404' => function(){
+                return '404';
+            },
+        ]);
+        $this->router->setUrl('/notfound');
+        $this->assertFalse($this->router->match());
+        $this->router->callResponse();
+        $this->expectOutputString('404');
+    }
+
 }

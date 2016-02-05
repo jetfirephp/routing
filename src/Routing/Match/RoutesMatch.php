@@ -90,6 +90,7 @@ class RoutesMatch implements Matcher
             $this->router->route->setCallback($this->request['path']);
             $this->router->route->setDetail($this->request);
             $this->anonymous();
+            $this->router->route->setResponse(['code' => 202, 'message' => 'Accepted']);
         } else {
             if (isset($this->request['path']['name'])) $this->router->route->setName($this->request['path']['name']);
             if (isset($this->request['path']['method'])) $this->request['path']['method'] = is_array($this->request['path']['method']) ? $this->request['path']['method'] : [$this->request['path']['method']];
@@ -98,9 +99,11 @@ class RoutesMatch implements Matcher
                     ? $this->router->route->setCallback($this->request['path']['use'])
                     : $this->router->route->setCallback($this->request['path']);
             $this->router->route->setDetail($this->request);
-            ($this->validMethod() && ($this->anonymous() || $this->mvc() || $this->template()))
-                ? $this->router->route->setResponse(['code' => 202, 'message' => 'Accepted'])
-                : $this->router->route->setResponse(['code' => 405, 'message' => 'Method Not Allowed']);
+            if($this->validMethod()) {
+                $this->anonymous();$this->mvc();$this->template();
+                $this->router->route->setResponse(['code' => 202, 'message' => 'Accepted']);
+            }else
+                $this->router->route->setResponse(['code' => 405, 'message' => 'Method Not Allowed']);
         }
         return $this->router->route->hasTarget();
     }
@@ -123,7 +126,7 @@ class RoutesMatch implements Matcher
     public function anonymous()
     {
         if (is_callable($this->router->route->getCallback())) {
-            $this->router->route->setTarget(['dispatcher' => 'JetFire\Routing\Dispatcher\FunctionDispatcher', 'function' => $this->router->route->getCallback()]);
+            $this->router->route->setTarget(['dispatcher' => 'JetFire\Routing\Dispatcher\FunctionDispatcher', 'closure' => $this->router->route->getCallback()]);
             return true;
         }
         return false;
@@ -138,9 +141,10 @@ class RoutesMatch implements Matcher
         if (!$this->router->route->hasTarget() && strpos($this->router->route->getCallback(), '@') !== false) {
             $routes = explode('@', $this->router->route->getCallback());
             if (!isset($routes[1])) $routes[1] = 'index';
+            $index = isset($this->request['index']) ? $this->request['index'] : 0;
             $class = (class_exists($routes[0]))
                 ? $routes[0]
-                : $this->router->collection->getRoutes()['namespace_'.$this->request['index']].$routes[0];
+                : $this->router->collection->getRoutes()['namespace_'.$index].$routes[0];
             if (!class_exists($class))
                 throw new \Exception('Class "' . $class . '." is not found');
             if (method_exists($class, $routes[1])) {
@@ -162,7 +166,8 @@ class RoutesMatch implements Matcher
             $path = trim($this->router->route->getCallback(), '/');
             $extension = explode('.', $path);
             $extension = end($extension);
-            $block = $this->router->collection->getRoutes()['path_'.$this->request['index']];
+            $index = isset($this->request['index']) ? $this->request['index'] : 0;
+            $block = $this->router->collection->getRoutes('path_'.$index);
             if (in_array('.' . $extension, $this->router->getConfig()['viewExtension'])) {
                 if (is_file($block . $path)) {
                     $target = $block . $path;
