@@ -5,6 +5,9 @@ namespace JetFire\Routing;
 /**
  * Class Route
  * @package JetFire\Routing
+ * @method getParameters()
+ * @method getBlock()
+ * @method getPath()
  */
 class Route
 {
@@ -50,7 +53,7 @@ class Route
         $this->set($args);
         $this->method = (
             isset($_POST['_METHOD'])
-            && ($_method = strtoupper($_POST['_METHOD']))
+            && ($_method = (isset($_POST['_METHOD']))?strtoupper($_POST['_METHOD']):'')
             && in_array($_method, array('PUT', 'DELETE'))
         ) ? $_method : $_SERVER['REQUEST_METHOD'];
     }
@@ -117,7 +120,7 @@ class Route
 
     /**
      * @param null $key
-     * @return int
+     * @return array
      */
     public function getResponse($key = null)
     {
@@ -173,7 +176,7 @@ class Route
 
     /**
      * @param null $key
-     * @return array|null
+     * @return array|string
      */
     public function getTarget($key = null)
     {

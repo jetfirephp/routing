@@ -27,6 +27,7 @@ class FunctionDispatcher
 
     /**
      * @description call anonymous function
+     *
      */
     public function call()
     {
