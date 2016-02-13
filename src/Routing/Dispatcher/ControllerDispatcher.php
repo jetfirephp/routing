@@ -7,10 +7,10 @@ use ReflectionClass;
 use ReflectionMethod;
 
 /**
- * Class MvcDispatcher
+ * Class ControllerDispatcher
  * @package JetFire\Routing\Dispatcher
  */
-class MvcDispatcher
+class ControllerDispatcher implements DispatcherInterface
 {
 
     /**

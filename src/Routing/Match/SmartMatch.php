@@ -16,6 +16,12 @@ class SmartMatch implements MatcherInterface
      */
     private $router;
 
+
+    /**
+     * @var array
+     */
+    private $matcher = ['matchTemplate','matchController'];
+
     /**
      * @param Router $router
      */
@@ -25,13 +31,30 @@ class SmartMatch implements MatcherInterface
     }
 
     /**
+     * @param string $matcher
+     */
+    public function addMatcher($matcher){
+        $this->matcher[] = $matcher;
+    }
+
+    /**
+     * @return array
+     */
+    public function getMatcher()
+    {
+        return $this->matcher;
+    }
+
+    /**
      * @return bool
      */
     public function match()
     {
-        if ($this->matchTemplate() || $this->matchMvc()) {
-            $this->router->route->setResponse(['code' => 202, 'message' => 'Accepted']);
-            return true;
+        foreach($this->matcher as $matcher){
+            if(call_user_func([$this,$matcher])) {
+                $this->router->route->setResponse(['code' => 202, 'message' => 'Accepted']);
+                return true;
+            }
         }
         return false;
     }
@@ -39,7 +62,7 @@ class SmartMatch implements MatcherInterface
     /**
      * @return bool
      */
-    private function matchTemplate()
+    public function matchTemplate()
     {
         foreach ($this->router->getConfig()['viewExtension'] as $extension) {
             for ($i = 0; $i < $this->router->collection->countRoutes; ++$i) {
@@ -64,7 +87,7 @@ class SmartMatch implements MatcherInterface
     /**
      * @return bool
      */
-    private function matchMvc()
+    public function matchController()
     {
         $routes = array_slice(explode('/', $this->router->route->getUrl()), 1);
         $i = 0;
@@ -77,7 +100,7 @@ class SmartMatch implements MatcherInterface
                     : ucfirst($route[0]) . 'Controller';
                 if (isset($route[1]) && method_exists($class, $route[1])) {
                     $this->router->route->setTarget([
-                        'dispatcher' => 'JetFire\Routing\Dispatcher\MvcDispatcher',
+                        'dispatcher' => 'JetFire\Routing\Dispatcher\ControllerDispatcher',
                         'di' => $this->router->getConfig()['di'],
                         'controller' => $class,
                         'action' => $route[1]

@@ -22,4 +22,12 @@ interface MatcherInterface
      */
     public function match();
 
+    /**
+     * @param string $matcher
+     */
+    public function addMatcher($matcher);
+    /**
+     * @return array
+     */
+    public function getMatcher();
 }

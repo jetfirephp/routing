@@ -6,10 +6,10 @@ namespace JetFire\Routing\Dispatcher;
 use JetFire\Routing\Route;
 
 /**
- * Class FunctionDispatcher
+ * Class ClosureDispatcher
  * @package JetFire\Routing\Dispatcher
  */
-class FunctionDispatcher
+class ClosureDispatcher implements DispatcherInterface
 {
 
     /**

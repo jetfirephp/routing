@@ -9,7 +9,7 @@ use JetFire\Routing\Route;
  * Class TemplateDispatcher
  * @package JetFire\Routing\Dispatcher
  */
-class TemplateDispatcher
+class TemplateDispatcher implements DispatcherInterface
 {
 
     /**

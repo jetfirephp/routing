@@ -22,11 +22,31 @@ class RoutesMatch implements MatcherInterface
     private $request = [];
 
     /**
+     * @var array
+     */
+    private $matcher = ['matchClosure','matchController','matchTemplate'];
+
+    /**
      * @param Router $router
      */
     public function __construct(Router $router)
     {
         $this->router = $router;
+    }
+
+    /**
+     * @param string $matcher
+     */
+    public function addMatcher($matcher){
+        $this->matcher[] = $matcher;
+    }
+
+    /**
+     * @return array
+     */
+    public function getMatcher()
+    {
+        return $this->matcher;
     }
 
     /**
@@ -89,7 +109,7 @@ class RoutesMatch implements MatcherInterface
         if(is_callable($this->request['path'])){
             $this->router->route->setCallback($this->request['path']);
             $this->router->route->setDetail($this->request);
-            $this->anonymous();
+            $this->matchClosure();
             $this->router->route->setResponse(['code' => 202, 'message' => 'Accepted']);
         } else {
             if (isset($this->request['path']['name'])) $this->router->route->setName($this->request['path']['name']);
@@ -100,7 +120,8 @@ class RoutesMatch implements MatcherInterface
                     : $this->router->route->setCallback($this->request['path']);
             $this->router->route->setDetail($this->request);
             if($this->validMethod()) {
-                $this->anonymous();$this->mvc();$this->template();
+                foreach($this->matcher as $matcher)
+                    call_user_func([$this,$matcher]);
                 $this->router->route->setResponse(['code' => 202, 'message' => 'Accepted']);
             }else
                 $this->router->route->setResponse(['code' => 405, 'message' => 'Method Not Allowed']);
@@ -123,10 +144,10 @@ class RoutesMatch implements MatcherInterface
     /**
      * @return bool
      */
-    public function anonymous()
+    public function matchClosure()
     {
         if (is_callable($this->router->route->getCallback())) {
-            $this->router->route->setTarget(['dispatcher' => 'JetFire\Routing\Dispatcher\FunctionDispatcher', 'closure' => $this->router->route->getCallback()]);
+            $this->router->route->setTarget(['dispatcher' => 'JetFire\Routing\Dispatcher\ClosureDispatcher', 'closure' => $this->router->route->getCallback()]);
             return true;
         }
         return false;
@@ -136,7 +157,7 @@ class RoutesMatch implements MatcherInterface
      * @return bool
      * @throws \Exception
      */
-    public function mvc()
+    public function matchController()
     {
         if (!$this->router->route->hasTarget() && strpos($this->router->route->getCallback(), '@') !== false) {
             $routes = explode('@', $this->router->route->getCallback());
@@ -149,7 +170,7 @@ class RoutesMatch implements MatcherInterface
                 throw new \Exception('Class "' . $class . '." is not found');
             if (method_exists($class, $routes[1])) {
                 $this->router->route->setTarget([
-                    'dispatcher' => 'JetFire\Routing\Dispatcher\MvcDispatcher',
+                    'dispatcher' => 'JetFire\Routing\Dispatcher\ControllerDispatcher',
                     'di' => $this->router->getConfig()['di'],
                     'controller' => $class,
                     'action' => $routes[1]
@@ -165,7 +186,7 @@ class RoutesMatch implements MatcherInterface
      * @return bool
      * @throws \Exception
      */
-    public function template()
+    public function matchTemplate()
     {
         if (!$this->router->route->hasTarget()) {
             $path = trim($this->router->route->getCallback(), '/');

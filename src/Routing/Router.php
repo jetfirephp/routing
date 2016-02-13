@@ -139,9 +139,10 @@ class Router
     {
         if (isset($this->route->getResponse()['templates']) && isset($this->route->getResponse()['templates'][$this->route->getResponse('code')])) {
             $this->route->setCallback($this->route->getResponse()['templates'][$this->route->getResponse('code')]);
-            $matcher = $this->config['matcherInstance']['JetFire\Routing\Match\RoutesMatch'];
-            if (call_user_func([$matcher, 'anonymous']) || call_user_func([$matcher, 'mvc']) || call_user_func([$matcher, 'template']))
-                $this->callTarget();
+            foreach($this->config['matcherInstance'] as $matcher) {
+                foreach (call_user_func([$matcher, 'getMatcher']) as $match)
+                    if (call_user_func([$matcher, $match])){ $this->callTarget(); break; }
+            }
         }
         http_response_code($this->route->getResponse('code'));
     }
