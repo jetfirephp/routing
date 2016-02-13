@@ -5,6 +5,10 @@ A simple & powerful router for PHP 5.4+
 
 ### Features
 
+V1.1
+* [Support dependency injection container](#config)
+* [Add your custom matcher and dispatcher](#custom-matcher)
+
 V1.0
 * Support static & dynamic route patterns
 * [Support REST routing](#rest)
@@ -16,10 +20,6 @@ V1.0
 * [Route Middleware](#middleware)
 * [Custom response](#response)
 * [Integration with other libraries](#libraries)
-
-V1.1
-* [Support dependency injection container](#config)
-* [Add your custom matcher and dispatcher](#custom-matcher)
 
 ### Getting started
 

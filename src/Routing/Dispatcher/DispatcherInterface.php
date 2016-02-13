@@ -21,4 +21,4 @@ interface DispatcherInterface {
      */
     public function call();
 
-} 
+}
