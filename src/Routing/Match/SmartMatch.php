@@ -8,7 +8,7 @@ use JetFire\Routing\Router;
  * Class SmartMatch
  * @package JetFire\Routing\Match
  */
-class SmartMatch implements Matcher
+class SmartMatch implements MatcherInterface
 {
 
     /**
@@ -47,7 +47,12 @@ class SmartMatch implements Matcher
                 $end = array_pop($url);
                 $url = implode('/', array_map('ucwords', $url)).'/'.$end;
                 if (is_file(($template = rtrim($this->router->collection->getRoutes('path_' . $i), '/') . $url . $extension))) {
-                    $this->router->route->setTarget(['dispatcher' => 'JetFire\Routing\Dispatcher\TemplateDispatcher', 'template' => $template, 'extension' => str_replace('.', '', $extension)]);
+                    $this->router->route->setTarget([
+                        'dispatcher' => 'JetFire\Routing\Dispatcher\TemplateDispatcher',
+                        'template' => $template,
+                        'extension' => str_replace('.', '', $extension),
+                        'callback' => $this->router->getConfig()['viewCallback']
+                    ]);
                     $this->router->route->addDetail('block', $this->router->collection->getRoutes('path_' . $i));
                     return true;
                 }
@@ -71,7 +76,12 @@ class SmartMatch implements Matcher
                     ? $this->router->collection->getRoutes('namespace_' . $i). ucfirst($route[0]) . 'Controller'
                     : ucfirst($route[0]) . 'Controller';
                 if (isset($route[1]) && method_exists($class, $route[1])) {
-                    $this->router->route->setTarget(['dispatcher' => 'JetFire\Routing\Dispatcher\MvcDispatcher', 'controller' => $class, 'action' => $route[1]]);
+                    $this->router->route->setTarget([
+                        'dispatcher' => 'JetFire\Routing\Dispatcher\MvcDispatcher',
+                        'di' => $this->router->getConfig()['di'],
+                        'controller' => $class,
+                        'action' => $route[1]
+                    ]);
                     $this->router->route->addDetail('parameters', array_slice($route, 2));
                     return true;
                 }

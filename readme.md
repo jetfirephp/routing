@@ -1,5 +1,5 @@
 ## JetFire PHP Routing
-[![Build Status](https://travis-ci.org/jetfirephp/routing.svg?branch=master)](https://travis-ci.org/jetfirephp/routing)[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/jetfirephp/routing/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/jetfirephp/routing/?branch=master)
+[![Build Status](https://travis-ci.org/jetfirephp/routing.svg?branch=master)](https://travis-ci.org/jetfirephp/routing) [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/jetfirephp/routing/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/jetfirephp/routing/?branch=master)
 
 A simple & powerful router for PHP 5.4+
 
@@ -15,6 +15,7 @@ A simple & powerful router for PHP 5.4+
 * [Route Middleware](#middleware)
 * [Custom response](#response)
 * [Integration with other libraries](#libraries)
+* Support dependency injection container
 
 ### Getting started
 
@@ -146,7 +147,7 @@ return [
 
 You have 3 actions possible for Array Routing. We assume you are using a separate file for your routes.
 <a name="template-matching"></a>
-##### Template Route
+##### Template
 
 ```php
 return [
@@ -163,7 +164,7 @@ return [
 ];
 ```
 <a name="mvc-matching"></a>
-##### Mvc Route
+##### Mvc
 
 
 ```php
@@ -181,7 +182,7 @@ return [
 ];
 ```
 
-##### Closure Route
+##### Closure
 
 ```php
 return [
@@ -193,7 +194,7 @@ return [
 	
 	// dynamic route with arguments
 	'/home/user-:id-:slug' => [
-		'use' => 'function($id,$slug){
+		'use' => function($id,$slug){
 			return 'Hello User '.$id.'-'.$slug;
 		},
 		'arguments' => ['id' => '[0-9]+','slug' => '[a-z-]*'],
@@ -240,6 +241,13 @@ $router->setConfig([
 	// If you use template engine library, you can use this to render the view
 	// See the 'Integration with other libraries' section for more details
 	'viewCallback'       => [],
+	
+	// If you want to add a dependency injection container for your controllers constructor or method
+	// for example if your controller 'HomeController' method 'log' method require a class like this : public function log(Request $request)
+	// by default :
+	'di'                => function($class){
+	                            return new $class;
+	                       },
 
 	// See the Named Routes section for more details
 	'generateRoutesPath' => false,

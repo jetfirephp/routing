@@ -27,24 +27,27 @@ class Router
     public $dispatcher;
 
     /**
+     * @var array
+     */
+    private $config = [
+        'matcher'            => ['JetFire\Routing\Match\RoutesMatch', 'JetFire\Routing\Match\SmartMatch'],
+        'viewExtension'      => ['.html', '.php', '.json', '.xml'],
+        'viewCallback'       => [],
+        'di'                 => '',
+        'generateRoutesPath' => false,
+    ];
+
+    /**
      * @param RouteCollection $collection
      */
     public function __construct(RouteCollection $collection)
     {
         $this->collection = $collection;
         $this->route = new Route();
+        $this->config['di'] = function($class){
+            return new $class;
+        };
     }
-
-    /**
-     * @var array
-     */
-    private $config = [
-        'matcher'               => ['JetFire\Routing\Match\RoutesMatch', 'JetFire\Routing\Match\SmartMatch'],
-        'viewExtension'         => ['.html', '.php', '.json', '.xml'],
-        'viewCallback'          => [],
-        'generateRoutesPath'    => false,
-        'basePath'              => ''
-    ];
 
     /**
      * @param array $config
@@ -105,7 +108,7 @@ class Router
     public function callTarget()
     {
         $target = $this->route->getTarget('dispatcher');
-        $this->dispatcher = new $target($this);
+        $this->dispatcher = new $target($this->route);
         return call_user_func([$this->dispatcher, 'call']);
     }
 
@@ -142,4 +145,4 @@ class Router
         }
         http_response_code($this->route->getResponse('code'));
     }
-} 
+}

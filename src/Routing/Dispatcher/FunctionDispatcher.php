@@ -3,7 +3,7 @@
 namespace JetFire\Routing\Dispatcher;
 
 
-use JetFire\Routing\Router;
+use JetFire\Routing\Route;
 
 /**
  * Class FunctionDispatcher
@@ -13,16 +13,16 @@ class FunctionDispatcher
 {
 
     /**
-     * @var Router
+     * @var Route
      */
-    private $router;
+    private $route;
 
     /**
-     * @param Router $router
+     * @param Route $route
      */
-    public function __construct(Router $router)
+    public function __construct(Route $route)
     {
-        $this->router = $router;
+        $this->route = $route;
     }
 
     /**
@@ -31,9 +31,9 @@ class FunctionDispatcher
      */
     public function call()
     {
-        if ($this->router->route->getResponse('code') == 202) $this->router->route->setResponse(['code' => 200, 'message' => 'OK', 'type' => 'text/html']);
-        $params = ($this->router->route->getParameters() == '') ? [] : $this->router->route->getParameters();
-        echo call_user_func_array($this->router->route->getTarget('closure'), $params);
+        if ($this->route->getResponse('code') == 202) $this->route->setResponse(['code' => 200, 'message' => 'OK', 'type' => 'text/html']);
+        $params = ($this->route->getParameters() == '') ? [] : $this->route->getParameters();
+        echo call_user_func_array($this->route->getTarget('closure'), $params);
     }
 
-} 
+}

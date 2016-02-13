@@ -3,7 +3,7 @@
 namespace JetFire\Routing\Dispatcher;
 
 
-use JetFire\Routing\Router;
+use JetFire\Routing\Route;
 
 /**
  * Class TemplateDispatcher
@@ -13,16 +13,16 @@ class TemplateDispatcher
 {
 
     /**
-     * @var Router
+     * @var Route
      */
-    private $router;
+    private $route;
 
     /**
-     * @param Router $router
+     * @param Route $route
      */
-    public function __construct(Router $router)
+    public function __construct(Route $route)
     {
-        $this->router = $router;
+        $this->route = $route;
     }
 
     /**
@@ -30,24 +30,24 @@ class TemplateDispatcher
      */
     public function call()
     {
-        if ($this->router->route->getResponse('code') == 202)
-            switch ($this->router->route->getTarget('extension')) {
+        if ($this->route->getResponse('code') == 202)
+            switch ($this->route->getTarget('extension')) {
                 case 'json':
-                    $this->router->route->setResponse(['code' => 200, 'message' => 'OK', 'type' => 'application/json']);
+                    $this->route->setResponse(['code' => 200, 'message' => 'OK', 'type' => 'application/json']);
                     header('Content-Type: application/json');
                     break;
                 case 'xml':
-                    $this->router->route->setResponse(['code' => 200, 'message' => 'OK', 'type' => 'application/xml']);
+                    $this->route->setResponse(['code' => 200, 'message' => 'OK', 'type' => 'application/xml']);
                     header('Content-Type: application/xml');
                     break;
                 default:
-                    $this->router->route->setResponse(['code' => 200, 'message' => 'OK', 'type' => 'text/html']);
+                    $this->route->setResponse(['code' => 200, 'message' => 'OK', 'type' => 'text/html']);
                     break;
             }
-        if (isset($this->router->getConfig()['viewCallback'][$this->router->route->getTarget('extension')]))
-            call_user_func_array($this->router->getConfig()['viewCallback'][$this->router->route->getTarget('extension')], [$this->router->route]);
+        if (isset($this->route->getTarget()['callback'][$this->route->getTarget('extension')]))
+            call_user_func_array($this->route->getTarget()['callback'][$this->route->getTarget('extension')], [$this->route]);
         else
-            require($this->router->route->getTarget('template'));
+            require($this->route->getTarget('template'));
     }
 
-} 
+}

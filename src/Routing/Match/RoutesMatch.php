@@ -9,7 +9,7 @@ use JetFire\Routing\Router;
  * Class RoutesMatch
  * @package JetFire\Routing\Match
  */
-class RoutesMatch implements Matcher
+class RoutesMatch implements MatcherInterface
 {
 
     /**
@@ -114,7 +114,7 @@ class RoutesMatch implements Matcher
     public function validMethod()
     {
         if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')
-            return (isset($this->request['path']['ajax']) && $this->request['path']['ajax'] == true) ? true : false;
+            return (isset($this->request['path']['ajax']) && $this->request['path']['ajax'] === true) ? true : false;
         $method = (isset($this->router->route->getDetail()['path']['method'])) ? $this->router->route->getDetail()['path']['method'] : ['GET'];
         return (in_array($this->router->route->getMethod(), $method)) ? true : false;
     }
@@ -148,7 +148,12 @@ class RoutesMatch implements Matcher
             if (!class_exists($class))
                 throw new \Exception('Class "' . $class . '." is not found');
             if (method_exists($class, $routes[1])) {
-                $this->router->route->setTarget(['dispatcher' => 'JetFire\Routing\Dispatcher\MvcDispatcher', 'controller' => $class, 'action' => $routes[1]]);
+                $this->router->route->setTarget([
+                    'dispatcher' => 'JetFire\Routing\Dispatcher\MvcDispatcher',
+                    'di' => $this->router->getConfig()['di'],
+                    'controller' => $class,
+                    'action' => $routes[1]
+                ]);
                 return true;
             }
             throw new \Exception('The required method "' . $routes[1] . '" is not found in "' . $class . '"');
@@ -171,7 +176,13 @@ class RoutesMatch implements Matcher
             if (in_array('.' . $extension, $this->router->getConfig()['viewExtension'])) {
                 if (is_file($block . $path)) {
                     $target = $block . $path;
-                    $this->router->route->setTarget(['dispatcher' => 'JetFire\Routing\Dispatcher\TemplateDispatcher', 'template' => $target,'block' => $block, 'extension' => $extension]);
+                    $this->router->route->setTarget([
+                        'dispatcher' => 'JetFire\Routing\Dispatcher\TemplateDispatcher',
+                        'template' => $target,
+                        'block' => $block,
+                        'extension' => $extension,
+                        'callback' => $this->router->getConfig()['viewCallback']
+                    ]);
                     return true;
                 }
                 throw new \Exception('Template file "' . $path . '" is not found in "' . $block . '"');
@@ -179,7 +190,7 @@ class RoutesMatch implements Matcher
                 foreach ($this->router->getConfig()['viewExtension'] as $ext) {
                     if (is_file($block . $path . $ext)){
                         $target = $block . $path . $ext;
-                        $this->router->route->setTarget(['dispatcher' => 'JetFire\Routing\Dispatcher\TemplateDispatcher', 'template' => $target,'block' => $block,  'extension' => str_replace('.', '', $ext)]);
+                        $this->router->route->setTarget(['dispatcher' => 'JetFire\Routing\Dispatcher\TemplateDispatcher', 'template' => $target,'block' => $block,  'extension' => str_replace('.', '', $ext),'callback' => $this->router->getConfig()['viewCallback']]);
                         return true;
                     }
                 }
@@ -188,4 +199,4 @@ class RoutesMatch implements Matcher
         }
         return false;
     }
-} 
+}

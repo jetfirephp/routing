@@ -2,7 +2,7 @@
 
 namespace JetFire\Routing\Dispatcher;
 
-use JetFire\Routing\Router;
+use JetFire\Routing\Route;
 use ReflectionClass;
 use ReflectionMethod;
 
@@ -14,16 +14,16 @@ class MvcDispatcher
 {
 
     /**
-     * @var Router
+     * @var Route
      */
-    private $router;
+    private $route;
 
     /**
-     * @param Router $router
+     * @param Route $route
      */
-    public function __construct(Router $router)
+    public function __construct(Route $route)
     {
-        $this->router = $router;
+        $this->route = $route;
     }
 
     /**
@@ -32,16 +32,16 @@ class MvcDispatcher
      */
     public function call()
     {
-        $reflectionMethod = new ReflectionMethod($this->router->route->getTarget('controller'), $this->router->route->getTarget('action'));
-        $dependencies = ($this->router->route->getParameters() == '') ? [] : $this->router->route->getParameters();
+        $reflectionMethod = new ReflectionMethod($this->route->getTarget('controller'), $this->route->getTarget('action'));
+        $dependencies = ($this->route->getParameters() == '') ? [] : $this->route->getParameters();
         foreach ($reflectionMethod->getParameters() as $arg) {
             if (!is_null($arg->getClass())) {
                 $class = $arg->getClass()->name;
-                array_unshift($dependencies, new $class);
+                array_unshift($dependencies, call_user_func_array($this->route->getTarget('di'),[$class]));
             }
         }
-        if ($this->router->route->getResponse('code') == 202)
-            $this->router->route->setResponse(['code' => 200, 'message' => 'OK', 'type' => 'text/html']);
+        if ($this->route->getResponse('code') == 202)
+            $this->route->setResponse(['code' => 200, 'message' => 'OK', 'type' => 'text/html']);
         return $reflectionMethod->invokeArgs($this->getController(), $dependencies);
     }
 
@@ -52,21 +52,21 @@ class MvcDispatcher
      */
     private function getController()
     {
-        $reflector = new ReflectionClass($this->router->route->getTarget('controller'));
+        $reflector = new ReflectionClass($this->route->getTarget('controller'));
         if (!$reflector->isInstantiable())
-            throw new \Exception('Target [' . $this->router->route->getTarget('controller') . '] is not instantiable.');
+            throw new \Exception('Target [' . $this->route->getTarget('controller') . '] is not instantiable.');
         $constructor = $reflector->getConstructor();
         if (is_null($constructor)) {
-            $class = $this->router->route->getTarget('controller');
-            return new $class;
+            $class = $this->route->getTarget('controller');
+            return call_user_func_array($this->route->getTarget('di'),[$class]);
         }
         $dependencies = $constructor->getParameters();
         $arguments = [];
         foreach ($dependencies as $dep) {
             $class = $dep->getClass()->name;
-            array_push($arguments, new $class);
+            array_push($arguments, call_user_func_array($this->route->getTarget('di'),[$class]));
         }
         return $reflector->newInstanceArgs($arguments);
     }
 
-} 
+}
