@@ -21,7 +21,7 @@ A simple & powerful router for PHP 5.4+
 
 1. PHP 5.4+ is required
 2. Install `JetFire\Routing` using Composer
-3. Setup URL rewriting so that all requests are handled by index.php (see .htaccess file)
+3. Setup URL rewriting so that all requests are handled by index.php
 
 ### Installation
 
@@ -29,6 +29,15 @@ Via [composer](https://getcomposer.org)
 
 ```bash
 $ composer require jetfirephp/routing
+```
+
+#### .htaccess
+
+```php
+RewriteEngine on
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.[a-zA-Z0-9\-\_\/]*)$ index.php?url=$1 [QSA,L]
 ```
 
 ### Usage
