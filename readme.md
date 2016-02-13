@@ -1,5 +1,5 @@
 ## JetFire PHP Routing
-[![Build Status](https://travis-ci.org/jetfirephp/routing.svg?branch=master)](https://travis-ci.org/jetfirephp/routing) [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/jetfirephp/routing/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/jetfirephp/routing/?branch=master)
+[![SensioLabsInsight](https://insight.sensiolabs.com/projects/aeb83524-44bc-4501-90dc-18041cc7a84a/small.png)](https://insight.sensiolabs.com/projects/aeb83524-44bc-4501-90dc-18041cc7a84a) [![Build Status](https://travis-ci.org/jetfirephp/routing.svg?branch=master)](https://travis-ci.org/jetfirephp/routing) [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/jetfirephp/routing/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/jetfirephp/routing/?branch=master)
 
 A simple & powerful router for PHP 5.4+
 
