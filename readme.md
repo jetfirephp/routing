@@ -5,6 +5,7 @@ A simple & powerful router for PHP 5.4+
 
 ### Features
 
+V1.0
 * Support static & dynamic route patterns
 * [Support REST routing](#rest)
 * [Support reversed routing using named routes](#named-routes)
@@ -15,7 +16,10 @@ A simple & powerful router for PHP 5.4+
 * [Route Middleware](#middleware)
 * [Custom response](#response)
 * [Integration with other libraries](#libraries)
-* Support dependency injection container
+
+V1.1
+* [Support dependency injection container](#config)
+* [Add your custom matcher and dispatcher](#custom-matcher)
 
 ### Getting started
 
@@ -231,7 +235,7 @@ $router = new \JetFire\Routing\Router($collection)
 // Run it!
 $router->run();
 ```
-
+<a name="config"></a>
 ### Router Configuration
 
 Here are the list of router configuration that you can edit :
@@ -431,6 +435,69 @@ $router->setResponse([
     '404' => 'ErrorController@notfound'
 ]);
 ```
+<a name="custom-matcher"></a>
+### Custom Matcher and Dispatcher
+
+If the default matcher and dispatcher doesn't match your expectation, you can write your own matcher and dispatcher like this :
+
+```php
+class MyCustomMatch implements MatcherInterface{
+    
+    public function __construct(Router $router);
+
+    // in this method you can check if the current uri match your expectation
+    // then you have to set the route target to be called with the dispatcher class name
+    // $this->router->route->setTarget(['dispatcher' => 'My\Custom\Dispatcher\Class\Name']);
+    public function match();
+
+    // you can add multiple match method in the same macther
+    // this matcher has to be called in match() method
+    public function addMatcher($matcher);
+
+    // to retrieve your matchers
+    public function getMatcher();
+}
+
+class MyCustomDispatcher implements DispatcherInterface{
+   
+    public function __construct(Route $route);
+       
+    // your target to call
+    // you can get your route target information with $this->route->getTarget()
+    public function call();
+}
+
+$router->addMatcher('MyCustomMatch');
+```
+
+You can also override the default matcher like this :
+
+```php
+class MyCustomMatch extends RoutesMatch implements MatcherInterface{
+    
+    public function __construct(Router $router){
+        parent::__construct($router);
+        // your custom match method
+        $this->addMatcher('customMatch');
+    }
+
+    public function customMatch(){
+        // your code here
+        // ...
+        // then you set the route target with the dispatcher
+    }
+}
+
+class MyCustomDispatcher implements DispatcherInterface{
+   
+    public function __construct(Route $route);
+       
+    // your target to call
+    // you can get your route target information with $this->route->getTarget()
+    public function call();
+}
+```
+
 <a name="libraries"></a>
 ### Integration with other libraries
 

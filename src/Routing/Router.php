@@ -66,6 +66,13 @@ class Router
     }
 
     /**
+     * @param string $matcher
+     */
+    public function addMatcher($matcher){
+        $this->config['matcher'][] = $matcher;
+    }
+
+    /**
      * @description main function to execute the router
      */
     public function run()
