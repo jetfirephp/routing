@@ -367,7 +367,7 @@ return [
 	
 	// global middleware are called every time
     'global_middleware' => [    
-    	// Here you define you middleware class to be called
+    	// Here you define your middleware class to be called
         'app\Middleware\Global',
     ],
 
