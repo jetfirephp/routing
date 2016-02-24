@@ -211,6 +211,9 @@ class Route
         return (isset($this->getDetail()['data']) && is_array($this->getDetail()['data']))?$this->getDetail()['data']:[];
     }
 
+    public function getCollection(){
+
+    }
     /**
      * @param $name
      * @param $arguments

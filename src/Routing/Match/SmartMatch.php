@@ -20,7 +20,7 @@ class SmartMatch implements MatcherInterface
     /**
      * @var array
      */
-    private $matcher = ['matchTemplate','matchController'];
+    private $matcher = ['matchController','matchTemplate'];
 
     /**
      * @param Router $router
@@ -92,8 +92,7 @@ class SmartMatch implements MatcherInterface
         $routes = array_slice(explode('/', $this->router->route->getUrl()), 1);
         $i = 0;
         do{
-            $route =  ('/' . $routes[0] == $this->router->collection->getRoutes('prefix_' . $i))
-                ? array_slice($routes, 1) : $routes;
+            $route =  ('/' . $routes[0] == $this->router->collection->getRoutes('prefix_' . $i)) ? array_slice($routes, 1) : $routes;
             if (isset($route[0])) {
                 $class =  (class_exists($this->router->collection->getRoutes('namespace_' . $i). ucfirst($route[0]) . 'Controller'))
                     ? $this->router->collection->getRoutes('namespace_' . $i). ucfirst($route[0]) . 'Controller'
@@ -106,6 +105,7 @@ class SmartMatch implements MatcherInterface
                         'action' => $route[1]
                     ]);
                     $this->router->route->addDetail('parameters', array_slice($route, 2));
+                    $this->router->route->addDetail('block', $this->router->collection->getRoutes('path_' . $i));
                     return true;
                 }
             }
