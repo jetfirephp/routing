@@ -51,7 +51,7 @@ class Router
         $this->collection = $collection;
         $this->response = is_null($response)? new Response() : $response;
         $this->response->setStatusCode(404);
-        $this->route = is_null($response)? new Route() : $route;
+        $this->route = is_null($route)? new Route() : $route;
         $this->config['di'] = function($class){
             return new $class;
         };
