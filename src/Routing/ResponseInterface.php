@@ -17,4 +17,4 @@ interface ResponseInterface {
     public function setCharset($charset);
     public function getCharset();
 
-} 
+}

@@ -437,4 +437,4 @@ class Response implements ResponseInterface{
         return in_array($this->statusCode, array(204, 304));
     }
 
-} 
+}
