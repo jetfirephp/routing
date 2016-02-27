@@ -3,6 +3,7 @@
 namespace JetFire\Routing\Dispatcher;
 
 
+use JetFire\Routing\ResponseInterface;
 use JetFire\Routing\Route;
 
 /**
@@ -11,29 +12,37 @@ use JetFire\Routing\Route;
  */
 class ClosureDispatcher implements DispatcherInterface
 {
-
     /**
      * @var Route
      */
     private $route;
 
     /**
+     * @var ResponseInterface
+     */
+    private $response;
+
+    /**
      * @param Route $route
      */
-    public function __construct(Route $route)
+    public function __construct(Route $route,ResponseInterface $response)
     {
         $this->route = $route;
+        $this->response = $response;
     }
+
 
     /**
      * @description call anonymous function
-     *
      */
     public function call()
     {
-        if ($this->route->getResponse('code') == 202) $this->route->setResponse(['code' => 200, 'message' => 'OK', 'type' => 'text/html']);
+        if ($this->response->getStatusCode() == 202) {
+            $this->response->setStatusCode(200);
+            $this->response->setHeaders(['Content-Type' => 'text/html']);
+        }
         $params = ($this->route->getParameters() == '') ? [] : $this->route->getParameters();
-        echo call_user_func_array($this->route->getTarget('closure'), $params);
+        $this->response->setContent(call_user_func_array($this->route->getTarget('closure'), $params));
     }
 
 }

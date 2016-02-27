@@ -18,6 +18,10 @@ class Router
      */
     public $collection;
     /**
+     * @var ResponseInterface
+     */
+    public $response;
+    /**
      * @var
      */
     public $middleware;
@@ -39,11 +43,15 @@ class Router
 
     /**
      * @param RouteCollection $collection
+     * @param ResponseInterface $response
+     * @param Route $route
      */
-    public function __construct(RouteCollection $collection)
+    public function __construct(RouteCollection $collection,ResponseInterface $response = null,Route $route = null)
     {
         $this->collection = $collection;
-        $this->route = new Route();
+        $this->response = is_null($response)? new Response() : $response;
+        $this->response->setStatusCode(404);
+        $this->route = is_null($response)? new Route() : $route;
         $this->config['di'] = function($class){
             return new $class;
         };
@@ -73,7 +81,7 @@ class Router
     }
 
     /**
-     * @description main function to execute the router
+     * @description main function
      */
     public function run()
     {
@@ -115,8 +123,11 @@ class Router
     public function callTarget()
     {
         $target = $this->route->getTarget('dispatcher');
-        $this->dispatcher = new $target($this->route);
-        return call_user_func([$this->dispatcher, 'call']);
+        if(!empty($target)) {
+            $this->dispatcher = new $target($this->route, $this->response);
+            return call_user_func([$this->dispatcher, 'call']);
+        }
+        return null;
     }
 
     /**
@@ -134,9 +145,9 @@ class Router
     /**
      * @param array $responses
      */
-    public function setResponse($responses = [])
+    public function setResponses($responses = [])
     {
-        $this->route->setResponse('templates', $responses);
+        $this->route->addDetail('response_templates', $responses);
     }
 
     /**
@@ -144,13 +155,14 @@ class Router
      */
     public function callResponse()
     {
-        if (isset($this->route->getResponse()['templates']) && isset($this->route->getResponse()['templates'][$this->route->getResponse('code')])) {
-            $this->route->setCallback($this->route->getResponse()['templates'][$this->route->getResponse('code')]);
+        if (isset($this->route->getDetail()['response_templates']) && isset($this->route->getDetail()['response_templates'][$code = $this->response->getStatusCode()])) {
+            $this->route->setCallback($this->route->getDetail()['response_templates'][$code]);
             foreach($this->config['matcherInstance'] as $matcher) {
                 foreach (call_user_func([$matcher, 'getMatcher']) as $match)
                     if (call_user_func([$matcher, $match])){ $this->callTarget(); break; }
             }
+            $this->response->setStatusCode($code);
         }
-        http_response_code($this->route->getResponse('code'));
+        $this->response->send();
     }
 }

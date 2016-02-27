@@ -422,7 +422,7 @@ See the API section to learn how to handle your $route in middleware class.
 If you want to handle custom 404,450... error template, you can do it like this :
 
 ```php
-$router->setResponse([
+$router->setResponses([
 	// you can use a closure to handle error
     '404' => function(){
         return '404';
@@ -556,6 +556,7 @@ $collection->
 
 // JetFire\Routing\Router
 $router->
+	response							        // JetFire\Routing\ResponseInterface instance
 	route										// JetFire\Routing\Route instance
 	collection									// JetFire\Routing\RouteCollection instance
 	middleware									// the middleware instance
@@ -574,8 +575,6 @@ $route->
 	setName($name) 								// set the route name
 	getCallback()  								// return the route callback (template,controller or anonymous function)
 	setCallback($callback) 						// set the route callback
-	getResponse($key = null)					// return the route response (code,type,message)
-	setResponse($key = null,$value = null)  	// set route response 
 	getMethod() 								// return the route method (GET,POST,PUT,DELETE)
 	getDetail() 								// return the route detail 
 	setDetail($detail) 							// set the route detail

@@ -2,6 +2,7 @@
 
 namespace JetFire\Routing\Dispatcher;
 
+use JetFire\Routing\ResponseInterface;
 use JetFire\Routing\Route;
 use ReflectionClass;
 use ReflectionMethod;
@@ -19,12 +20,19 @@ class ControllerDispatcher implements DispatcherInterface
     private $route;
 
     /**
+     * @var ResponseInterface
+     */
+    private $response;
+
+    /**
      * @param Route $route
      */
-    public function __construct(Route $route)
+    public function __construct(Route $route,ResponseInterface $response)
     {
         $this->route = $route;
+        $this->response = $response;
     }
+
 
     /**
      * @return mixed
@@ -40,9 +48,9 @@ class ControllerDispatcher implements DispatcherInterface
                 array_unshift($dependencies, call_user_func_array($this->route->getTarget('di'),[$class]));
             }
         }
-        if ($this->route->getResponse('code') == 202)
-            $this->route->setResponse(['code' => 200, 'message' => 'OK', 'type' => 'text/html']);
-        return $reflectionMethod->invokeArgs($this->getController(), $dependencies);
+        if ($this->response->getStatusCode() == 202)
+            $this->response->setStatusCode(200);
+        return $this->response->setContent($reflectionMethod->invokeArgs($this->getController(), $dependencies));
     }
 
 

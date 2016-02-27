@@ -30,4 +30,9 @@ interface MatcherInterface
      * @return array
      */
     public function getMatcher();
+
+    /**
+     * @param array $dispatcher
+     */
+    public function setDispatcher($dispatcher = []);
 }

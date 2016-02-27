@@ -22,6 +22,11 @@ class SmartMatch implements MatcherInterface
      */
     private $matcher = ['matchController','matchTemplate'];
 
+    private $dispatcher = [
+        'matchTemplate' => 'JetFire\Routing\Dispatcher\TemplateDispatcher',
+        'matchController' => 'JetFire\Routing\Dispatcher\ControllerDispatcher'
+    ];
+
     /**
      * @param Router $router
      */
@@ -46,13 +51,21 @@ class SmartMatch implements MatcherInterface
     }
 
     /**
+     * @param array $dispatcher
+     */
+    public function setDispatcher($dispatcher = [])
+    {
+        $this->dispatcher = array_merge($dispatcher,$this->dispatcher);
+    }
+
+    /**
      * @return bool
      */
     public function match()
     {
         foreach($this->matcher as $matcher){
             if(call_user_func([$this,$matcher])) {
-                $this->router->route->setResponse(['code' => 202, 'message' => 'Accepted']);
+                $this->router->response->setStatusCode(202);
                 return true;
             }
         }
@@ -71,7 +84,7 @@ class SmartMatch implements MatcherInterface
                 $url = implode('/', array_map('ucwords', $url)).'/'.$end;
                 if (is_file(($template = rtrim($this->router->collection->getRoutes('path_' . $i), '/') . $url . $extension))) {
                     $this->router->route->setTarget([
-                        'dispatcher' => 'JetFire\Routing\Dispatcher\TemplateDispatcher',
+                        'dispatcher' => $this->dispatcher['matchTemplate'],
                         'template' => $template,
                         'extension' => str_replace('.', '', $extension),
                         'callback' => $this->router->getConfig()['viewCallback']
@@ -99,7 +112,7 @@ class SmartMatch implements MatcherInterface
                     : ucfirst($route[0]) . 'Controller';
                 if (isset($route[1]) && method_exists($class, $route[1])) {
                     $this->router->route->setTarget([
-                        'dispatcher' => 'JetFire\Routing\Dispatcher\ControllerDispatcher',
+                        'dispatcher' => $this->dispatcher['matchController'],
                         'di' => $this->router->getConfig()['di'],
                         'controller' => $class,
                         'action' => $route[1]

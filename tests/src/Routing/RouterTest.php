@@ -197,7 +197,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $router->setUrl('/search');
         $this->assertFalse( $router->match());
-        $this->assertEquals(405, $router->route->getResponse('code'));
+        $this->assertEquals(405, $router->response->getStatusCode());
     }
 
     public function testClosureWithParameters(){
@@ -215,9 +215,9 @@ class RouterTest extends PHPUnit_Framework_TestCase
     }
 
     public function testResponse(){
-        $this->router->setResponse([
+        $this->router->setResponses([
             '404' => function(){
-                return '404';
+                echo '404';
             },
         ]);
         $this->router->setUrl('/notfound');

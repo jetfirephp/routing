@@ -25,7 +25,7 @@ return [
 
 	'/search1-:id-:name' => [
 		'use' => function($id,$name){
-            return 'Search'.$id.$name;
+            echo 'Search'.$id.$name;
         },
         'arguments' => ['id' => '[0-9]+','name' => '[a-z]*'],
 	],

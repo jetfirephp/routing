@@ -3,6 +3,7 @@
 namespace JetFire\Routing\Dispatcher;
 
 
+use JetFire\Routing\ResponseInterface;
 use JetFire\Routing\Route;
 
 /**
@@ -18,11 +19,27 @@ class TemplateDispatcher implements DispatcherInterface
     private $route;
 
     /**
+     * @var ResponseInterface
+     */
+    private $response;
+
+    /**
+     * @var array
+     */
+    protected $types = [
+        'json' => 'application/json',
+        'xml' => 'application/xml',
+        'txt' => 'text/plain',
+        'html' => 'text/html'
+    ];
+
+    /**
      * @param Route $route
      */
-    public function __construct(Route $route)
+    public function __construct(Route $route,ResponseInterface $response)
     {
         $this->route = $route;
+        $this->response = $response;
     }
 
     /**
@@ -30,24 +47,22 @@ class TemplateDispatcher implements DispatcherInterface
      */
     public function call()
     {
-        if ($this->route->getResponse('code') == 202)
-            switch ($this->route->getTarget('extension')) {
-                case 'json':
-                    $this->route->setResponse(['code' => 200, 'message' => 'OK', 'type' => 'application/json']);
-                    header('Content-Type: application/json');
-                    break;
-                case 'xml':
-                    $this->route->setResponse(['code' => 200, 'message' => 'OK', 'type' => 'application/xml']);
-                    header('Content-Type: application/xml');
-                    break;
-                default:
-                    $this->route->setResponse(['code' => 200, 'message' => 'OK', 'type' => 'text/html']);
-                    break;
-            }
+        if ($this->response->getStatusCode() == 202)
+            $this->setContentType($this->route->getTarget('extension'));
         if (isset($this->route->getTarget()['callback'][$this->route->getTarget('extension')]))
-            call_user_func_array($this->route->getTarget()['callback'][$this->route->getTarget('extension')], [$this->route]);
+            $this->response->setContent(call_user_func_array($this->route->getTarget()['callback'][$this->route->getTarget('extension')], [$this->route]));
         else
-            require($this->route->getTarget('template'));
+            $this->response->setContent(require($this->route->getTarget('template')));
+    }
+
+    /**
+     * @param $extension
+     */
+    public function setContentType($extension){
+        $this->response->setStatusCode(200);
+        isset($this->types[$extension])
+            ? $this->response->setHeaders(['Content-Type' => $this->types[$extension]])
+            : $this->response->setHeaders(['Content-Type' => $this->types['html']]);
     }
 
 }

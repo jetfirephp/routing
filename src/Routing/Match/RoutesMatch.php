@@ -27,6 +27,15 @@ class RoutesMatch implements MatcherInterface
     private $matcher = ['matchClosure','matchController','matchTemplate'];
 
     /**
+     * @var array
+     */
+    private $dispatcher = [
+        'matchClosure' => 'JetFire\Routing\Dispatcher\ClosureDispatcher',
+        'matchController' => 'JetFire\Routing\Dispatcher\ControllerDispatcher',
+        'matchTemplate' => 'JetFire\Routing\Dispatcher\TemplateDispatcher',
+    ];
+
+    /**
      * @param Router $router
      */
     public function __construct(Router $router)
@@ -47,6 +56,13 @@ class RoutesMatch implements MatcherInterface
     public function getMatcher()
     {
         return $this->matcher;
+    }
+
+    /**
+     * @param array $dispatcher
+     */
+    public function setDispatcher($dispatcher = []){
+        $this->dispatcher = array_merge($dispatcher,$this->dispatcher);
     }
 
     /**
@@ -110,7 +126,7 @@ class RoutesMatch implements MatcherInterface
             $this->router->route->setCallback($this->request['path']);
             $this->router->route->setDetail($this->request);
             $this->matchClosure();
-            $this->router->route->setResponse(['code' => 202, 'message' => 'Accepted']);
+            $this->router->response->setStatusCode(202);
         } else {
             if (isset($this->request['path']['name'])) $this->router->route->setName($this->request['path']['name']);
             if (isset($this->request['path']['method'])) $this->request['path']['method'] = is_array($this->request['path']['method']) ? $this->request['path']['method'] : [$this->request['path']['method']];
@@ -122,9 +138,9 @@ class RoutesMatch implements MatcherInterface
             if($this->validMethod()) {
                 foreach($this->matcher as $matcher)
                     call_user_func([$this,$matcher]);
-                $this->router->route->setResponse(['code' => 202, 'message' => 'Accepted']);
+                $this->router->response->setStatusCode(202);
             }else
-                $this->router->route->setResponse(['code' => 405, 'message' => 'Method Not Allowed']);
+                $this->router->response->setStatusCode(405);
         }
         return $this->router->route->hasTarget();
     }
@@ -147,7 +163,7 @@ class RoutesMatch implements MatcherInterface
     public function matchClosure()
     {
         if (is_callable($this->router->route->getCallback())) {
-            $this->router->route->setTarget(['dispatcher' => 'JetFire\Routing\Dispatcher\ClosureDispatcher', 'closure' => $this->router->route->getCallback()]);
+            $this->router->route->setTarget(['dispatcher' => $this->dispatcher['matchClosure'], 'closure' => $this->router->route->getCallback()]);
             return true;
         }
         return false;
@@ -170,7 +186,7 @@ class RoutesMatch implements MatcherInterface
                 throw new \Exception('Class "' . $class . '." is not found');
             if (method_exists($class, $routes[1])) {
                 $this->router->route->setTarget([
-                    'dispatcher' => 'JetFire\Routing\Dispatcher\ControllerDispatcher',
+                    'dispatcher' => $this->dispatcher['matchController'],
                     'di' => $this->router->getConfig()['di'],
                     'controller' => $class,
                     'action' => $routes[1]
@@ -198,7 +214,7 @@ class RoutesMatch implements MatcherInterface
                 if (is_file($block . $path)) {
                     $target = $block . $path;
                     $this->router->route->setTarget([
-                        'dispatcher' => 'JetFire\Routing\Dispatcher\TemplateDispatcher',
+                        'dispatcher' => $this->dispatcher['matchTemplate'],
                         'template' => $target,
                         'block' => $block,
                         'extension' => $extension,
@@ -211,7 +227,7 @@ class RoutesMatch implements MatcherInterface
                 foreach ($this->router->getConfig()['viewExtension'] as $ext) {
                     if (is_file($block . $path . $ext)){
                         $target = $block . $path . $ext;
-                        $this->router->route->setTarget(['dispatcher' => 'JetFire\Routing\Dispatcher\TemplateDispatcher', 'template' => $target,'block' => $block,  'extension' => str_replace('.', '', $ext),'callback' => $this->router->getConfig()['viewCallback']]);
+                        $this->router->route->setTarget(['dispatcher' => $this->dispatcher['matchTemplate'], 'template' => $target,'block' => $block,  'extension' => str_replace('.', '', $ext),'callback' => $this->router->getConfig()['viewCallback']]);
                         return true;
                     }
                 }

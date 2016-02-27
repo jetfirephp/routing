@@ -3,6 +3,7 @@
 namespace JetFire\Routing\Dispatcher;
 
 
+use JetFire\Routing\ResponseInterface;
 use JetFire\Routing\Route;
 
 /**
@@ -14,7 +15,7 @@ interface DispatcherInterface {
     /**
      * @param Route $route
      */
-    public function __construct(Route $route);
+    public function __construct(Route $route,ResponseInterface $response);
 
     /**
      * @return mixed

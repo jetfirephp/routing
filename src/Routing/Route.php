@@ -25,14 +25,6 @@ class Route
      */
     private $callback;
     /**
-     * @var array
-     */
-    private $response = [
-        'code'    => 404,
-        'message' => 'Not Found',
-        'type'    => 'text/plain'
-    ];
-    /**
      * @var string
      */
     private $method;
@@ -46,11 +38,9 @@ class Route
     private $detail = [];
 
     /**
-     * @param array $args
      */
-    public function __construct($args = [])
+    public function __construct()
     {
-        $this->set($args);
         $this->method = (
             isset($_POST['_METHOD'])
             && in_array($_POST['_METHOD'], array('PUT', 'DELETE'))
@@ -64,7 +54,6 @@ class Route
     {
         if (isset($args['name'])) $this->name = $args['name'];
         if (isset($args['callback'])) $this->callback = $args['callback'];
-        if (isset($args['code'])) $this->response['code'] = $args['code'];
         if (isset($args['target'])) $this->target = $args['target'];
         if (isset($args['detail'])) $this->detail = $args['detail'];
     }
@@ -118,29 +107,6 @@ class Route
     }
 
     /**
-     * @param null $key
-     * @return array|string
-     */
-    public function getResponse($key = null)
-    {
-        if (!is_null($key) && isset($this->response[$key]))
-            return $this->response[$key];
-        return $this->response;
-    }
-
-    /**
-     * @param null $key
-     * @param null $value
-     */
-    public function setResponse($key = null, $value = null)
-    {
-        if (!is_null($key) && !is_null($value))
-            $this->response[$key] = $value;
-        else
-            $this->response = array_merge($this->response, $key);
-    }
-
-    /**
      * @return array
      */
     public function getMethod()
@@ -161,7 +127,7 @@ class Route
      */
     public function setDetail($detail)
     {
-        $this->detail = $detail;
+        $this->detail = array_merge($detail,$this->detail);
     }
 
     /**
@@ -211,9 +177,6 @@ class Route
         return (isset($this->getDetail()['data']) && is_array($this->getDetail()['data']))?$this->getDetail()['data']:[];
     }
 
-    public function getCollection(){
-
-    }
     /**
      * @param $name
      * @param $arguments
