@@ -227,7 +227,15 @@ class RoutesMatch implements MatcherInterface
                 foreach ($this->router->getConfig()['viewExtension'] as $ext) {
                     if (is_file($block . $path . $ext)){
                         $target = $block . $path . $ext;
-                        $this->router->route->setTarget(['dispatcher' => $this->dispatcher['matchTemplate'], 'template' => $target,'block' => $block,  'extension' => str_replace('.', '', $ext),'callback' => $this->router->getConfig()['viewCallback']]);
+                        $extension = explode('.', $ext);
+                        $extension = end($extension);
+                        $this->router->route->setTarget([
+                            'dispatcher' => $this->dispatcher['matchTemplate'],
+                            'template' => $target,
+                            'block' => $block,
+                            'extension' => str_replace('.', '', $extension),
+                            'callback' => $this->router->getConfig()['viewCallback']
+                        ]);
                         return true;
                     }
                 }

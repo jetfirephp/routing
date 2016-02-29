@@ -51,8 +51,11 @@ class TemplateDispatcher implements DispatcherInterface
             $this->setContentType($this->route->getTarget('extension'));
         if (isset($this->route->getTarget()['callback'][$this->route->getTarget('extension')]))
             $this->response->setContent(call_user_func_array($this->route->getTarget()['callback'][$this->route->getTarget('extension')], [$this->route]));
-        else
-            $this->response->setContent(require($this->route->getTarget('template')));
+        else {
+            ob_start();
+            require($this->route->getTarget('template'));
+            $this->response->setContent(ob_get_clean());
+        }
     }
 
     /**
