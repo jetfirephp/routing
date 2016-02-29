@@ -70,6 +70,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $this->router->setUrl($url);
         $this->assertTrue($this->router->match());
         $this->router->callTarget();
+        $this->router->response->sendContent();
         $this->expectOutputString($output);
     }
 
@@ -92,6 +93,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $this->router->setUrl($url);
         $this->assertTrue($this->router->match());
         $this->router->callTarget();
+        $this->router->response->sendContent();
         $this->expectOutputString($output);
     }
 
@@ -117,6 +119,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $this->router->setUrl($url);
         $this->assertTrue($this->router->match());
         $this->router->callTarget();
+        $this->router->response->sendContent();
         $this->expectOutputString($output);
     }
 
@@ -142,6 +145,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $this->router->setUrl($url);
         $this->assertTrue($this->router->match());
         $this->router->callTarget();
+        $this->router->response->sendContent();
         $this->expectOutputString($output);
     }
 
@@ -170,6 +174,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $this->router->setUrl($url);
         $this->assertTrue($this->router->match());
         $this->router->callTarget();
+        $this->router->response->sendContent();
         $this->expectOutputString($output);
     }
 
@@ -184,6 +189,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $router->setUrl('/search');
         $this->assertTrue( $router->match());
         $router->callTarget();
+        $router->response->sendContent();
         $this->assertEquals('POST', $router->route->getMethod());
     }
 
@@ -204,6 +210,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $this->router->setUrl('/block1/search1-3-peter');
         $this->assertTrue( $this->router->match());
         $this->router->callTarget();
+        $this->router->response->sendContent();
         $this->expectOutputString('Search3peter');
     }
 
@@ -211,6 +218,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $this->router->setUrl('/log');
         $this->assertTrue( $this->router->match());
         $this->router->callTarget();
+        $this->router->response->sendContent();
         $this->expectOutputString('yes');
     }
 
