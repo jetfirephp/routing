@@ -157,9 +157,12 @@ class Router
     {
         if (isset($this->route->getDetail()['response_templates']) && isset($this->route->getDetail()['response_templates'][$code = $this->response->getStatusCode()])) {
             $this->route->setCallback($this->route->getDetail()['response_templates'][$code]);
-            foreach($this->config['matcherInstance'] as $matcher) {
-                foreach (call_user_func([$matcher, 'getMatcher']) as $match)
-                    if (call_user_func([$matcher, $match])){ $this->callTarget(); break; }
+            if(!isset($this->config['matcherInstance']))
+                foreach ($this->config['matcher'] as $matcher)
+                    $this->config['matcherInstance'][$matcher] = new $matcher($this);
+            foreach($this->config['matcherInstance'] as $instance) {
+                foreach (call_user_func([$instance, 'getMatcher']) as $match)
+                    if (call_user_func([$instance, $match])){ $this->callTarget(); break; }
             }
             $this->response->setStatusCode($code);
         }
