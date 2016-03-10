@@ -1,6 +1,6 @@
 <?php
 
-namespace JetFire\Routing\Match;
+namespace JetFire\Routing\Matcher;
 
 use JetFire\Routing\Router;
 
@@ -8,7 +8,7 @@ use JetFire\Routing\Router;
  * Class SmartMatch
  * @package JetFire\Routing\Match
  */
-class SmartMatch implements MatcherInterface
+class UriMatcher implements MatcherInterface
 {
 
     /**

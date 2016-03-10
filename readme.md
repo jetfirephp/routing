@@ -13,8 +13,9 @@ V1.0
 * Support static & dynamic route patterns
 * [Support REST routing](#rest)
 * [Support reversed routing using named routes](#named-routes)
-* [Smart routing](#smart-routing)
-* [Array routing](#array-routing)
+* [Uri matcher](#uri-matcher)
+* [Array matcher](#array-matcher)
+* [Closure matching](#closure-matching)
 * [Template matching](#template-matching)
 * [MVC matching](#mvc-matching)
 * [Route Middleware](#middleware)
@@ -66,12 +67,12 @@ $router->run();
 ```
 ### Matcher
 
-`JetFire\Routing` provide 2 type of matcher for your routes : `JetFire\Routing\Match\RoutesMatch` and `JetFire\Routing\Match\SmartMatch`
+`JetFire\Routing` provide 2 type of matcher for your routes : `JetFire\Routing\Matcher\ArrayMatcher` and `JetFire\Routing\Matcher\UriMatcher`
 
-<a name="smart-routing"></a>
-#### Smart Routing
+<a name="uri-matcher"></a>
+#### Uri Matcher
 
-With Smart Routing you don't have to define your routes. Depending on the uri it can check if a target exist for the current url.
+With Uri Matcher you don't have to define your routes. Depending on the uri it can check if a target exist for the current url.
 But you have to define your views directory path and the namespace for controllers to the collection like this :
 
 ```php
@@ -90,9 +91,9 @@ $collection->addRoutes(null,$options)
 
 For example if the uri is : `/home/index`
 
-##### Template matcher
+##### Template matching
 
-Smart Routing check if an `index.php` file exist in `/_VIEW_DIR_PATH_/Home` directory. 
+Uri Matcher check if an `index.php` file exist in `/_VIEW_DIR_PATH_/Home` directory. 
 
 If you want to check for other extension (html,json,...) You can configure the router like this :
 
@@ -105,34 +106,34 @@ $router->setConfig([
 ]);
 ```
 
-##### Controller matcher
+##### Controller matching
 
-If Smart Routing failed to find the template then it checks if a controller with name `HomeController` located in the namespace `_CONTROLLERS_NAMESPACE_` has the `index` method.
+If Uri Matcher failed to find the template then it checks if a controller with name `HomeController` located in the namespace `_CONTROLLERS_NAMESPACE_` has the `index` method.
 You have to require your controller before matching or you can use your custom autoloader to load your controllers.
-Smart Routing support also dynamic routes. For example if the uri is : `/home/user/peter/parker` then you must have a method `user` with two parameters like this :
+Uri Matcher support also dynamic routes. For example if the uri is : `/home/user/peter/parker` then you must have a method `user` with two parameters like this :
 
 ```php
 class HomeController {
     public function user($firstName,$lastName){
         // $firstName = peter
-        // $lasstName = parker
+        // $lastName = parker
     }
 }
 ```
 
-If you want to disable SmartRouting you have to remove 'JetFire\Routing\Match\SmartMatch' from your router configuration :
+If you want to disable Uri Matcher you have to remove 'JetFire\Routing\Matcher\UriMatcher' from your router configuration :
 
 ```php
 $router->setConfig([
-    // default : 'matcher' => ['JetFire\Routing\Match\RoutesMatch', 'JetFire\Routing\Match\SmartMatch']
-	'matcher' => ['JetFire\Routing\Match\RoutesMatch'],
+    // default : 'matcher' => ['JetFire\Routing\Matcher\ArrayMatcher', 'JetFire\Routing\Match\UriMatcher']
+	'matcher' => ['JetFire\Routing\Matcher\ArrayMatcher'],
 ]);
 ```
  
-<a name="array-routing"></a>
-#### Array Routing
+<a name="array-matcher"></a>
+#### Array Matcher
 
-With Array Routing you have to add your routes like this :
+With Array Matcher you have to add your routes like this :
 
 ```php
 $options = [
@@ -160,7 +161,7 @@ return [
 
 You have 3 actions possible for Array Routing. We assume you are using a separate file for your routes.
 <a name="template-matching"></a>
-##### Template
+##### Template matching
 
 ```php
 return [
@@ -177,7 +178,7 @@ return [
 ];
 ```
 <a name="mvc-matching"></a>
-##### Controller
+##### Controller Matching
 
 
 ```php
@@ -194,7 +195,7 @@ return [
 
 ];
 ```
-
+<a name="closure-matching"></a>
 ##### Closure
 
 ```php
@@ -244,8 +245,8 @@ Here are the list of router configuration that you can edit :
 $router->setConfig([
 	
 	// You can enable/disable a matcher or you can add you custom matcher class 
-	// default matcher are JetFire\Routing\Match\RoutesMatch and JetFire\Routing\Match\SmartMatch
-	'matcher' => ['JetFire\Routing\Match\RoutesMatch', 'JetFire\Routing\Match\SmartMatch'],
+	// default matcher are JetFire\Routing\Matcher\ArrayMatcher and JetFire\Routing\Matcher\UriMatcher
+	'matcher' => ['JetFire\Routing\Matcher\ArrayMatcher', 'JetFire\Routing\Matcher\UriMatcher'],
 
 	// You can add/remove extension for views
 	// default extension for views
@@ -317,7 +318,7 @@ $collection->getRoutePath('home.index'); // return http://your_domain/home/index
 $collection->getRoutePath('home.user',[ 'id' => 1, 'slug' => 'toto']); // return http://your_domain/home/user-1-toto
 ```
 
-Supported only in `JetFire\Routing\Match\RoutesMatch`.
+Supported only in `JetFire\Routing\Matcher\ArrayMatcher`.
 <a name="rest"></a>
 ### REST Routing
 
@@ -467,13 +468,13 @@ class MyCustomDispatcher implements DispatcherInterface{
     public function call();
 }
 
-$router->addMatcher('MyCustomMatch');
+$router->addMatcher('MyCustomMatcher');
 ```
 
 You can also override the default matcher like this :
 
 ```php
-class MyCustomMatch extends RoutesMatch implements MatcherInterface{
+class MyCustomMatcher extends ArrayMatcher implements MatcherInterface{
     
     public function __construct(Router $router){
         parent::__construct($router);

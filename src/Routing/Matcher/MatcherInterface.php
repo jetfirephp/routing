@@ -1,6 +1,6 @@
 <?php
 
-namespace JetFire\Routing\Match;
+namespace JetFire\Routing\Matcher;
 
 
 use JetFire\Routing\Router;

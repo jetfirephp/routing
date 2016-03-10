@@ -34,7 +34,7 @@ class Router
      * @var array
      */
     private $config = [
-        'matcher'            => ['JetFire\Routing\Match\RoutesMatch', 'JetFire\Routing\Match\SmartMatch'],
+        'matcher'            => ['JetFire\Routing\Matcher\ArrayMatcher', 'JetFire\Routing\Matcher\UriMatcher'],
         'viewExtension'      => ['.html', '.php', '.json', '.xml'],
         'viewCallback'       => [],
         'di'                 => '',

@@ -1,6 +1,6 @@
 <?php
 
-namespace JetFire\Routing\Match;
+namespace JetFire\Routing\Matcher;
 
 
 use JetFire\Routing\Router;
@@ -9,7 +9,7 @@ use JetFire\Routing\Router;
  * Class RoutesMatch
  * @package JetFire\Routing\Match
  */
-class RoutesMatch implements MatcherInterface
+class ArrayMatcher implements MatcherInterface
 {
 
     /**
