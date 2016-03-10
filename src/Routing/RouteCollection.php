@@ -124,10 +124,10 @@ class RouteCollection
             if (isset($this->routes['routes_' . $i]))
                 foreach ($this->routes['routes_' . $i] as $route => $dependencies) {
                     if (is_array($dependencies) && isset($dependencies['use']))
-                        $use = (is_object($dependencies['use'])) ? 'closure-' . $count : trim($dependencies['use'], '/');
+                        $use = (is_callable($dependencies['use'])) ? 'closure-' . $count : trim($dependencies['use'], '/');
                     else
-                        $use = (is_object($dependencies)) ? 'closure-' . $count : trim($dependencies, '/');
-                    (!is_object($dependencies) && isset($dependencies['name'])) ? $this->routesByName[$use . '#' . $dependencies['name']] = $root . $prefix . $route : $this->routesByName[$use] = $root . $prefix . $route;
+                        $use = (is_callable($dependencies)) ? 'closure-' . $count : trim($dependencies, '/');
+                    (!is_callable($dependencies) && isset($dependencies['name'])) ? $this->routesByName[$use . '#' . $dependencies['name']] = $root . $prefix . $route : $this->routesByName[$use] = $root . $prefix . $route;
                     $count++;
                 }
         }
