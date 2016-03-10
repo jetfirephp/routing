@@ -77,7 +77,7 @@ class UriMatcher implements MatcherInterface
      */
     public function matchTemplate()
     {
-        foreach ($this->router->getConfig()['viewExtension'] as $extension) {
+        foreach ($this->router->getConfig()['templateExtension'] as $extension) {
             for ($i = 0; $i < $this->router->collection->countRoutes; ++$i) {
                 $url = explode('/', str_replace($this->router->collection->getRoutes('prefix_' . $i), '',$this->router->route->getUrl()));
                 $end = array_pop($url);
@@ -87,7 +87,7 @@ class UriMatcher implements MatcherInterface
                         'dispatcher' => $this->dispatcher['matchTemplate'],
                         'template' => $template,
                         'extension' => str_replace('.', '', $extension),
-                        'callback' => $this->router->getConfig()['viewCallback']
+                        'callback' => $this->router->getConfig()['templateCallback']
                     ]);
                     $this->router->route->addDetail('block', $this->router->collection->getRoutes('path_' . $i));
                     return true;

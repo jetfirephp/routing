@@ -210,7 +210,7 @@ class ArrayMatcher implements MatcherInterface
             $extension = end($extension);
             $index = isset($this->request['index']) ? $this->request['index'] : 0;
             $block = $this->router->collection->getRoutes('path_'.$index);
-            if (in_array('.' . $extension, $this->router->getConfig()['viewExtension'])) {
+            if (in_array('.' . $extension, $this->router->getConfig()['templateExtension'])) {
                 if (is_file($block . $path)) {
                     $target = $block . $path;
                     $this->router->route->setTarget([
@@ -218,13 +218,13 @@ class ArrayMatcher implements MatcherInterface
                         'template' => $target,
                         'block' => $block,
                         'extension' => $extension,
-                        'callback' => $this->router->getConfig()['viewCallback']
+                        'callback' => $this->router->getConfig()['templateCallback']
                     ]);
                     return true;
                 }
                 throw new \Exception('Template file "' . $path . '" is not found in "' . $block . '"');
             } else {
-                foreach ($this->router->getConfig()['viewExtension'] as $ext) {
+                foreach ($this->router->getConfig()['templateExtension'] as $ext) {
                     if (is_file($block . $path . $ext)){
                         $target = $block . $path . $ext;
                         $extension = explode('.', $ext);
@@ -234,7 +234,7 @@ class ArrayMatcher implements MatcherInterface
                             'template' => $target,
                             'block' => $block,
                             'extension' => str_replace('.', '', $extension),
-                            'callback' => $this->router->getConfig()['viewCallback']
+                            'callback' => $this->router->getConfig()['templateCallback']
                         ]);
                         return true;
                     }

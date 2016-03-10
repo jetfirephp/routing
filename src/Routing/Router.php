@@ -35,8 +35,8 @@ class Router
      */
     private $config = [
         'matcher'            => ['JetFire\Routing\Matcher\ArrayMatcher', 'JetFire\Routing\Matcher\UriMatcher'],
-        'viewExtension'      => ['.html', '.php', '.json', '.xml'],
-        'viewCallback'       => [],
+        'templateExtension'      => ['.html', '.php', '.json', '.xml'],
+        'templateCallback'       => [],
         'di'                 => '',
         'generateRoutesPath' => false,
     ];

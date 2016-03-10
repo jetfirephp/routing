@@ -17,7 +17,7 @@ V1.0
 * [Array matcher](#array-matcher)
 * [Closure matching](#closure-matching)
 * [Template matching](#template-matching)
-* [MVC matching](#mvc-matching)
+* [Controller matching](#controller-matching)
 * [Route Middleware](#middleware)
 * [Custom response](#response)
 * [Integration with other libraries](#libraries)
@@ -73,7 +73,7 @@ $router->run();
 #### Uri Matcher
 
 With Uri Matcher you don't have to define your routes. Depending on the uri it can check if a target exist for the current url.
-But you have to define your views directory path and the namespace for controllers to the collection like this :
+But you have to define your views directory path and controllers namespace to the collection :
 
 ```php
 $options = [
@@ -101,7 +101,7 @@ If you want to check for other extension (html,json,...) You can configure the r
 $router->setConfig([
 	
 	// Define your template extension like this
-	'viewExtension' => ['.php','.html','.twig','.json','.xml'],
+	'templateExtension' => ['.php','.html','.twig','.json','.xml'],
 
 ]);
 ```
@@ -177,7 +177,7 @@ return [
 
 ];
 ```
-<a name="mvc-matching"></a>
+<a name="controller-matching"></a>
 ##### Controller Matching
 
 
@@ -250,11 +250,11 @@ $router->setConfig([
 
 	// You can add/remove extension for views
 	// default extension for views
-	'viewExtension'      => ['.html', '.php', '.json', '.xml'],
+	'templateExtension'      => ['.html', '.php', '.json', '.xml'],
 
 	// If you use template engine library, you can use this to render the view
 	// See the 'Integration with other libraries' section for more details
-	'viewCallback'       => [],
+	'templateCallback'       => [],
 	
 	// If you want to add a dependency injection container for your controllers constructor or method
 	// for example if your controller 'HomeController' method 'log' method require a class like this : public function log(Request $request)
@@ -380,7 +380,7 @@ return [
         'app/Blocks/UserBlock/' => 'app\Middleware\User',
     ],
 	
-	// class middleware are called when the mvc router match one of the following controller
+	// class middleware are called when the controller router match one of the following controller
     'class_middleware' => [
     	// You define here for each controller the middleware class to be called
         'app/Blocks/PublicBlock/Controllers/HomeController' => 'app\Middleware\Home',
@@ -502,7 +502,7 @@ class MyCustomDispatcher implements DispatcherInterface{
 <a name="libraries"></a>
 ### Integration with other libraries
 
-If you want to integrate other template engine libraries like twig, smarty ... you have to set the 'viewCallback' in router.
+If you want to integrate other template engine libraries like twig, smarty ... you have to set the 'templateCallback' in router.
 
 ```php
 // Twig template engine
@@ -513,7 +513,7 @@ Twig_Autoloader::register();
 $tpl = new \Acme\Template\Template();
 
 $router->setConfig([
-	'viewCallback' => [
+	'templateCallback' => [
 
 		// if the router find a template with twig enxtension then it will call the twig template engine
 		'twig' => function($route){				
