@@ -105,10 +105,10 @@ class RouteCollection
     public function setMiddleware($middleware)
     {
         if (is_string($middleware)) $middleware = rtrim($middleware, '/');
-        if (is_file($middleware) && is_array($mid = include $middleware))
-            $this->middleware = $mid;
-        elseif (is_array($middleware))
+        if(is_array($middleware))
             $this->middleware = $middleware;
+        elseif (is_file($middleware) && is_array($mid = include $middleware))
+            $this->middleware = $mid;
         else throw new \InvalidArgumentException('Accepted argument for setMiddleware are array and array file');
     }
 
@@ -125,8 +125,10 @@ class RouteCollection
                 foreach ($this->routes['routes_' . $i] as $route => $dependencies) {
                     if (is_array($dependencies) && isset($dependencies['use']))
                         $use = (is_callable($dependencies['use'])) ? 'closure-' . $count : trim($dependencies['use'], '/');
-                    else
+                    elseif(!is_array($dependencies))
                         $use = (is_callable($dependencies)) ? 'closure-' . $count : trim($dependencies, '/');
+                    else
+                        $use = $route;
                     (!is_callable($dependencies) && isset($dependencies['name'])) ? $this->routesByName[$use . '#' . $dependencies['name']] = $root . $prefix . $route : $this->routesByName[$use] = $root . $prefix . $route;
                     $count++;
                 }
