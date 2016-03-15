@@ -117,7 +117,7 @@ class RouteCollection
      */
     public function generateRoutesPath()
     {
-        $root = 'http://' . $_SERVER['HTTP_HOST'] . str_replace('/index.php', '', $_SERVER['SCRIPT_NAME']);
+        $root = 'http://' . (isset($_SERVER['HTTP_HOST'])?$_SERVER['HTTP_HOST']:$_SERVER['SERVER_NAME']) . str_replace('/index.php', '', $_SERVER['SCRIPT_NAME']);
         $count = 0;
         for ($i = 0; $i < $this->countRoutes; ++$i) {
             $prefix = (isset($this->routes['prefix_' . $i])) ? $this->routes['prefix_' . $i] : '';
