@@ -41,13 +41,11 @@ class ControllerDispatcher implements DispatcherInterface
     public function call()
     {
         $reflectionMethod = new ReflectionMethod($this->route->getTarget('controller'), $this->route->getTarget('action'));
-        $dependencies = ($this->route->getParameters() == '') ? [] : $this->route->getParameters();
-        foreach ($reflectionMethod->getParameters() as $arg) {
-            if (!is_null($arg->getClass())) {
-                $class = $arg->getClass()->name;
-                array_unshift($dependencies, call_user_func_array($this->route->getTarget('di'),[$class]));
-            }
-        }
+        $dependencies = [];
+        foreach ($reflectionMethod->getParameters() as $arg)
+            if (!is_null($arg->getClass()))
+                $dependencies[] = call_user_func_array($this->route->getTarget('di'),[$arg->getClass()->name]);
+        $dependencies = array_merge($dependencies,($this->route->getParameters() == '') ? [] : $this->route->getParameters());
         if ($this->response->getStatusCode() == 202)
             $this->response->setStatusCode(200);
         return $this->response->setContent($reflectionMethod->invokeArgs($this->getController(), $dependencies));
