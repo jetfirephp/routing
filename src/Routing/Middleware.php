@@ -85,14 +85,33 @@ class Middleware
      */
     private function callHandler($instance){
         $reflectionMethod = new ReflectionMethod($instance, 'handle');
-        $dependencies = [$this->router->route];
-        foreach ($reflectionMethod->getParameters() as $arg) {
-            if (!is_null($arg->getClass())) {
-                $class = $arg->getClass()->name;
-                array_unshift($dependencies,call_user_func_array($this->router->getConfig()['di'],[$class]));
-            }
-        }
+        $dependencies = [];
+        foreach ($reflectionMethod->getParameters() as $arg)
+            if (!is_null($arg->getClass()))
+                $dependencies[] = $this->getClass($arg->getClass()->name);
+        $dependencies = array_merge($dependencies,[$this->router->route]);
         return $reflectionMethod->invokeArgs($instance, $dependencies);
+    }
+
+    /**
+     * @param $class
+     * @return Route|RouteCollection|Router|mixed
+     */
+    private function getClass($class){
+        switch($class){
+            case 'JetFire\Routing\Route':
+                return $this->router->route;
+                break;
+            case 'JetFire\Routing\Router':
+                return $this->router;
+                break;
+            case 'JetFire\Routing\RouteCollection':
+                return $this->router->collection;
+                break;
+            default:
+                return call_user_func_array($this->router->getConfig()['di'],[$class]);
+                break;
+        }
     }
 
 }
