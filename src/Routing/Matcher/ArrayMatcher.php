@@ -62,7 +62,17 @@ class ArrayMatcher implements MatcherInterface
      * @param array $dispatcher
      */
     public function setDispatcher($dispatcher = []){
-        $this->dispatcher = array_merge($dispatcher,$this->dispatcher);
+        $this->dispatcher = $dispatcher;
+    }
+
+    /**
+     * @param $method
+     * @param $class
+     * @return mixed|void
+     * @internal param array $dispatcher
+     */
+    public function addDispatcher($method,$class){
+        $this->dispatcher[$method] = $class;
     }
 
     /**
@@ -72,14 +82,15 @@ class ArrayMatcher implements MatcherInterface
     {
         $this->request = [];
         for ($i = 0; $i < $this->router->collection->countRoutes; ++$i) {
-            $this->request['block'] = $this->router->collection->getRoutes('path_' . $i);
             $this->request['prefix'] = ($this->router->collection->getRoutes('prefix_' . $i) != '') ? $this->router->collection->getRoutes('prefix_' . $i) : '';
-            foreach ($this->router->collection->getRoutes('routes_' . $i) as $route => $dependencies) {
-                $this->request['path'] = $dependencies;
-                $this->request['index'] = $i;
+            foreach ($this->router->collection->getRoutes('routes_' . $i) as $route => $params) {
+                $this->request['params'] = $params;
+                $this->request['collection_index'] = $i;
                 $this->request['route'] = preg_replace_callback('#:([\w]+)#', [$this, 'paramMatch'], '/' . trim(trim($this->request['prefix'], '/') . '/' . trim($route, '/'), '/'));
-                if ($this->routeMatch('#^' . $this->request['route'] . '$#'))
+                if ($this->routeMatch('#^' . $this->request['route'] . '$#')) {
+                    $this->setRoute();
                     return $this->generateTarget();
+                }
             }
         }
         unset($this->request);
@@ -92,9 +103,9 @@ class ArrayMatcher implements MatcherInterface
      */
     private function paramMatch($match)
     {
-        if (is_array($this->request['path']) && isset($this->request['path']['arguments'][$match[1]])) {
-            $this->request['path']['arguments'][$match[1]] = str_replace('(', '(?:', $this->request['path']['arguments'][$match[1]]);
-            return '(' . $this->request['path']['arguments'][$match[1]] . ')';
+        if (is_array($this->request['params']) && isset($this->request['params']['arguments'][$match[1]])) {
+            $this->request['params']['arguments'][$match[1]] = str_replace('(', '(?:', $this->request['params']['arguments'][$match[1]]);
+            return '(' . $this->request['params']['arguments'][$match[1]] . ')';
         }
         return '([^/]+)';
     }
@@ -122,27 +133,33 @@ class ArrayMatcher implements MatcherInterface
      */
     private function generateTarget()
     {
-        if(is_callable($this->request['path'])){
-            $this->router->route->setCallback($this->request['path']);
-            $this->router->route->setDetail($this->request);
-            $this->matchClosure();
+        if($this->validMethod()) {
+            foreach($this->matcher as $match) if(call_user_func([$this,$match])) break;
+            $index = isset($this->request['collection_index']) ? $this->request['collection_index'] : 0;
+            $this->router->route->addTarget('block',$this->router->collection->getRoutes('block_'.$index));
+            $this->router->route->addTarget('view_dir',$this->router->collection->getRoutes('view_dir_'.$index));
             $this->router->response->setStatusCode(202);
-        } else {
-            if (isset($this->request['path']['name'])) $this->router->route->setName($this->request['path']['name']);
-            if (isset($this->request['path']['method'])) $this->request['path']['method'] = is_array($this->request['path']['method']) ? $this->request['path']['method'] : [$this->request['path']['method']];
-            if (isset($this->request['path']))
-                (is_array($this->request['path']) && isset($this->request['path']['use']))
-                    ? $this->router->route->setCallback($this->request['path']['use'])
-                    : $this->router->route->setCallback($this->request['path']);
-            $this->router->route->setDetail($this->request);
-            if($this->validMethod()) {
-                foreach($this->matcher as $matcher)
-                    call_user_func([$this,$matcher]);
-                $this->router->response->setStatusCode(202);
-            }else
-                $this->router->response->setStatusCode(405);
-        }
+        }else
+            $this->router->response->setStatusCode(405);
         return $this->router->route->hasTarget();
+    }
+
+    /**
+     *
+     */
+    private function setRoute(){
+        if (isset($this->request['params'])) {
+            if(is_callable($this->request['params']))
+                $this->router->route->setCallback($this->request['params']);
+            else {
+                (is_array($this->request['params']) && isset($this->request['params']['use']))
+                    ? $this->router->route->setCallback($this->request['params']['use'])
+                    : $this->router->route->setCallback($this->request['params']);
+                if (isset($this->request['params']['name'])) $this->router->route->setName($this->request['params']['name']);
+                if (isset($this->request['params']['method'])) $this->request['params']['method'] = is_array($this->request['params']['method']) ? $this->request['params']['method'] : [$this->request['params']['method']];
+            }
+        }
+        $this->router->route->setDetail($this->request);
     }
 
     /**
@@ -150,9 +167,10 @@ class ArrayMatcher implements MatcherInterface
      */
     public function validMethod()
     {
+        if(is_callable($this->request['params']))return true;
         if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')
-            return (isset($this->request['path']['ajax']) && $this->request['path']['ajax'] === true) ? true : false;
-        $method = (isset($this->router->route->getDetail()['path']['method'])) ? $this->router->route->getDetail()['path']['method'] : ['GET'];
+            return (isset($this->request['params']['ajax']) && $this->request['params']['ajax'] === true) ? true : false;
+        $method = (isset($this->router->route->getDetail()['params']['method'])) ? $this->router->route->getDetail()['params']['method'] : ['GET'];
         return (in_array($this->router->route->getMethod(), $method)) ? true : false;
     }
 
@@ -163,7 +181,10 @@ class ArrayMatcher implements MatcherInterface
     public function matchClosure()
     {
         if (is_callable($this->router->route->getCallback())) {
-            $this->router->route->setTarget(['dispatcher' => $this->dispatcher['matchClosure'], 'closure' => $this->router->route->getCallback()]);
+            $this->router->route->setTarget([
+                'dispatcher' => $this->dispatcher['matchClosure'],
+                'closure' => $this->router->route->getCallback()
+            ]);
             return true;
         }
         return false;
@@ -175,13 +196,13 @@ class ArrayMatcher implements MatcherInterface
      */
     public function matchController()
     {
-        if (!$this->router->route->hasTarget() && strpos($this->router->route->getCallback(), '@') !== false) {
+        if (strpos($this->router->route->getCallback(), '@') !== false) {
             $routes = explode('@', $this->router->route->getCallback());
             if (!isset($routes[1])) $routes[1] = 'index';
-            $index = isset($this->request['index']) ? $this->request['index'] : 0;
+            $index = isset($this->request['collection_index']) ? $this->request['collection_index'] : 0;
             $class = (class_exists($routes[0]))
                 ? $routes[0]
-                : $this->router->collection->getRoutes()['namespace_'.$index].$routes[0];
+                : $this->router->collection->getRoutes()['ctrl_namespace_'.$index].$routes[0];
             if (!class_exists($class))
                 throw new \Exception('Class "' . $class . '." is not found');
             if (method_exists($class, $routes[1])) {
@@ -204,43 +225,32 @@ class ArrayMatcher implements MatcherInterface
      */
     public function matchTemplate()
     {
-        if (!$this->router->route->hasTarget()) {
+        if(is_string($this->router->route->getCallback())) {
             $path = trim($this->router->route->getCallback(), '/');
-            $extension = explode('.', $path);
-            $extension = end($extension);
-            $index = isset($this->request['index']) ? $this->request['index'] : 0;
-            $block = $this->router->collection->getRoutes('path_'.$index);
-            if (in_array('.' . $extension, $this->router->getConfig()['templateExtension'])) {
-                if (is_file($block . $path)) {
-                    $target = $block . $path;
-                    $this->router->route->setTarget([
-                        'dispatcher' => $this->dispatcher['matchTemplate'],
-                        'template' => $target,
-                        'block' => $block,
-                        'extension' => $extension,
-                        'callback' => $this->router->getConfig()['templateCallback']
-                    ]);
-                    return true;
-                }
-                throw new \Exception('Template file "' . $path . '" is not found in "' . $block . '"');
-            } else {
+            $extension = substr(strrchr($path, "."), 1);
+            $index = isset($this->request['collection_index']) ? $this->request['collection_index'] : 0;
+            $viewDir = $this->router->collection->getRoutes('view_dir_' . $index);
+            $target = null;
+            if (in_array('.' . $extension, $this->router->getConfig()['templateExtension']) && is_file($viewDir . $path))
+                $target = $viewDir . $path;
+            else {
                 foreach ($this->router->getConfig()['templateExtension'] as $ext) {
-                    if (is_file($block . $path . $ext)){
-                        $target = $block . $path . $ext;
-                        $extension = explode('.', $ext);
-                        $extension = end($extension);
-                        $this->router->route->setTarget([
-                            'dispatcher' => $this->dispatcher['matchTemplate'],
-                            'template' => $target,
-                            'block' => $block,
-                            'extension' => str_replace('.', '', $extension),
-                            'callback' => $this->router->getConfig()['templateCallback']
-                        ]);
-                        return true;
+                    if (is_file($viewDir . $path . $ext)) {
+                        $target = $viewDir . $path . $ext;
+                        $extension = substr(strrchr($ext, "."), 1);
+                        break;
                     }
                 }
-                throw new \Exception('Template file "' . $path . '" is not found in "' .$block . '"');
             }
+            if(is_null($target))
+                throw new \Exception('Template file "' . $path . '" is not found in "' . $viewDir . '"');
+            $this->router->route->setTarget([
+                'dispatcher' => $this->dispatcher['matchTemplate'],
+                'template'   => $target,
+                'extension'  => $extension,
+                'callback'   => $this->router->getConfig()['templateCallback']
+            ]);
+            return true;
         }
         return false;
     }

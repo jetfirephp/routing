@@ -35,4 +35,11 @@ interface MatcherInterface
      * @param array $dispatcher
      */
     public function setDispatcher($dispatcher = []);
+
+    /**
+     * @param $method
+     * @param $class
+     * @return mixed
+     */
+    public function addDispatcher($method,$class);
 }

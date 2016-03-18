@@ -22,6 +22,9 @@ class UriMatcher implements MatcherInterface
      */
     private $matcher = ['matchController','matchTemplate'];
 
+    /**
+     * @var array
+     */
     private $dispatcher = [
         'matchTemplate' => 'JetFire\Routing\Dispatcher\TemplateDispatcher',
         'matchController' => 'JetFire\Routing\Dispatcher\ControllerDispatcher'
@@ -55,7 +58,16 @@ class UriMatcher implements MatcherInterface
      */
     public function setDispatcher($dispatcher = [])
     {
-        $this->dispatcher = array_merge($dispatcher,$this->dispatcher);
+        $this->dispatcher = $dispatcher;
+    }
+
+    /**
+     * @param $method
+     * @param $class
+     * @return mixed|void
+     */
+    public function addDispatcher($method,$class){
+        $this->dispatcher[$method] = $class;
     }
 
     /**
@@ -82,14 +94,17 @@ class UriMatcher implements MatcherInterface
                 $url = explode('/', str_replace($this->router->collection->getRoutes('prefix_' . $i), '',$this->router->route->getUrl()));
                 $end = array_pop($url);
                 $url = implode('/', array_map('ucwords', $url)).'/'.$end;
-                if (is_file(($template = rtrim($this->router->collection->getRoutes('path_' . $i), '/') . $url . $extension))) {
+                if (is_file(($template = rtrim($this->router->collection->getRoutes('view_dir_' . $i), '/') . $url . $extension))) {
+                    $block = $this->router->collection->getRoutes('block_'.$i);
+                    $viewDir = $this->router->collection->getRoutes('view_dir_'.$i);
                     $this->router->route->setTarget([
                         'dispatcher' => $this->dispatcher['matchTemplate'],
+                        'block' => $block,
+                        'view_dir' => $viewDir,
                         'template' => $template,
                         'extension' => str_replace('.', '', $extension),
                         'callback' => $this->router->getConfig()['templateCallback']
                     ]);
-                    $this->router->route->addDetail('block', $this->router->collection->getRoutes('path_' . $i));
                     return true;
                 }
             }
@@ -107,18 +122,21 @@ class UriMatcher implements MatcherInterface
         do{
             $route =  ('/' . $routes[0] == $this->router->collection->getRoutes('prefix_' . $i)) ? array_slice($routes, 1) : $routes;
             if (isset($route[0])) {
-                $class =  (class_exists($this->router->collection->getRoutes('namespace_' . $i). ucfirst($route[0]) . 'Controller'))
-                    ? $this->router->collection->getRoutes('namespace_' . $i). ucfirst($route[0]) . 'Controller'
+                $class =  (class_exists($this->router->collection->getRoutes('ctrl_namespace_' . $i). ucfirst($route[0]) . 'Controller'))
+                    ? $this->router->collection->getRoutes('ctrl_namespace_' . $i). ucfirst($route[0]) . 'Controller'
                     : ucfirst($route[0]) . 'Controller';
                 if (isset($route[1]) && method_exists($class, $route[1])) {
+                    $block = $this->router->collection->getRoutes('block_'.$i);
+                    $viewDir = $this->router->collection->getRoutes('view_dir_'.$i);
                     $this->router->route->setTarget([
                         'dispatcher' => $this->dispatcher['matchController'],
+                        'block' => $block,
+                        'view_dir' => $viewDir,
                         'di' => $this->router->getConfig()['di'],
                         'controller' => $class,
                         'action' => $route[1]
                     ]);
                     $this->router->route->addDetail('parameters', array_slice($route, 2));
-                    $this->router->route->addDetail('block', $this->router->collection->getRoutes('path_' . $i));
                     return true;
                 }
             }

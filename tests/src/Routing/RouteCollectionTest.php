@@ -41,7 +41,7 @@ class RouteCollectionTest extends PHPUnit_Framework_TestCase{
      * @param RouteCollection $collection
      */
     public function testGetRoutes(RouteCollection $collection){
-        $this->assertArrayHasKey('path_0',$collection->getRoutes());
+        $this->assertArrayHasKey('view_dir_0',$collection->getRoutes());
         $this->assertEquals('/public',$collection->getRoutes('prefix_0'));
         $this->assertEquals('',$collection->getRoutes('prefix_1'));
     }

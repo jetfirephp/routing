@@ -160,6 +160,15 @@ class Route
     }
 
     /**
+     * @param $key
+     * @param $value
+     */
+    public function addTarget($key, $value)
+    {
+        $this->target[$key] = $value;
+    }
+
+    /**
      * @param null $key
      * @return bool
      */

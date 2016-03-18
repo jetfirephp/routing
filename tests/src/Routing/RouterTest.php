@@ -23,17 +23,17 @@ class RouterTest extends PHPUnit_Framework_TestCase
     {
         $collection = new RouteCollection();
         $collection->addRoutes(ROOT.'/Config/routes.php',[
-            'path' => ROOT.'/Views',
-            'namespace' => 'JetFire\Routing\App\Controllers',
+            'view_dir' => ROOT.'/Views',
+            'ctrl_namespace' => 'JetFire\Routing\App\Controllers',
         ]);
         $collection->addRoutes(ROOT.'/Block1/routes.php',[
-            'path' => ROOT.'/Block1/Views',
-            'namespace' => 'JetFire\Routing\App\Block1',
+            'view_dir' => ROOT.'/Block1/Views',
+            'ctrl_namespace' => 'JetFire\Routing\App\Block1',
             'prefix' => 'block1'
         ]);
         $collection->addRoutes(ROOT.'/Block2/routes.php',[
-            'path' => ROOT.'/Block2/',
-            'namespace' => 'JetFire\Routing\App\Block2\Controllers'
+            'view_dir' => ROOT.'/Block2/',
+            'ctrl_namespace' => 'JetFire\Routing\App\Block2\Controllers'
         ]);
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $this->router = new Router($collection);
@@ -62,8 +62,8 @@ class RouterTest extends PHPUnit_Framework_TestCase
      */
     public function testSmartMatchWithoutRoutes($path,$namespace,$url,$output,$prefix){
         $collection = new RouteCollection(null,[
-            'path' => $path,
-            'namespace' => $namespace,
+            'view_dir' => $path,
+            'ctrl_namespace' => $namespace,
             'prefix' => $prefix
         ]);
         $this->router = new Router($collection);
@@ -181,8 +181,8 @@ class RouterTest extends PHPUnit_Framework_TestCase
     public function testPostResponseMethod(){
         $collection = new RouteCollection();
         $collection->addRoutes(ROOT.'/Config/routes.php',[
-            'path' => ROOT.'/Views',
-            'namespace' => 'JetFire\Routing\App\Controllers',
+            'view_dir' => ROOT.'/Views',
+            'ctrl_namespace' => 'JetFire\Routing\App\Controllers',
         ]);
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $router = new Router($collection);
@@ -196,8 +196,8 @@ class RouterTest extends PHPUnit_Framework_TestCase
     public function testGetResponseMethod(){
         $collection = new RouteCollection();
         $collection->addRoutes(ROOT.'/Config/routes.php',[
-            'path' => ROOT.'/Views',
-            'namespace' => 'JetFire\Routing\App\Controllers',
+            'view_dir' => ROOT.'/Views',
+            'ctrl_namespace' => 'JetFire\Routing\App\Controllers',
         ]);
         $router = new Router($collection);
         $_SERVER['REQUEST_METHOD'] = 'GET';

@@ -44,8 +44,8 @@ class Middleware
     public function blockMiddleware()
     {
         if (isset($this->router->collection->middleware['block_middleware']))
-            if (isset($this->router->collection->middleware['block_middleware'][$this->router->route->getBlock()]) && class_exists($this->router->collection->middleware['block_middleware'][$this->router->route->getBlock()])) {
-                $class = $this->router->collection->middleware['block_middleware'][$this->router->route->getBlock()];
+            if (isset($this->router->collection->middleware['block_middleware'][$this->router->route->getTarget('block')]) && class_exists($this->router->collection->middleware['block_middleware'][$this->router->route->getTarget('block')])) {
+                $class = $this->router->collection->middleware['block_middleware'][$this->router->route->getTarget('block')];
                 $mid_block = call_user_func($this->router->getConfig()['di'],$class);
                 if (method_exists($mid_block, 'handle')) $this->callHandler($mid_block);
             }
