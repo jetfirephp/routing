@@ -30,12 +30,8 @@ class Middleware
     public function globalMiddleware()
     {
         if (isset($this->router->collection->middleware['global_middleware']))
-            foreach ($this->router->collection->middleware['global_middleware'] as $mid) {
-                if (class_exists($mid)) {
-                    $mid_global = call_user_func($this->router->getConfig()['di'],$mid);
-                    if (method_exists($mid_global, 'handle')) $this->callHandler($mid_global);
-                }
-            }
+            foreach ($this->router->collection->middleware['global_middleware'] as $class)
+                if (class_exists($class)) $this->callHandler($class);
     }
 
     /**
@@ -46,8 +42,7 @@ class Middleware
         if (isset($this->router->collection->middleware['block_middleware']))
             if (isset($this->router->collection->middleware['block_middleware'][$this->router->route->getTarget('block')]) && class_exists($this->router->collection->middleware['block_middleware'][$this->router->route->getTarget('block')])) {
                 $class = $this->router->collection->middleware['block_middleware'][$this->router->route->getTarget('block')];
-                $mid_block = call_user_func($this->router->getConfig()['di'],$class);
-                if (method_exists($mid_block, 'handle')) $this->callHandler($mid_block);
+                $this->callHandler($class);
             }
     }
 
@@ -60,8 +55,7 @@ class Middleware
             $ctrl = str_replace('\\', '/', $this->router->route->getTarget('controller'));
             if (isset($this->router->collection->middleware['class_middleware'][$ctrl]) && class_exists($this->router->route->getTarget('controller'))) {
                 $class = $this->router->collection->middleware['class_middleware'][$ctrl];
-                $mid_class = call_user_func($this->router->getConfig()['di'],$class);
-                if (method_exists($mid_class, 'handle')) $this->callHandler($mid_class);
+                $this->callHandler($class);
             }
         }
     }
@@ -74,23 +68,25 @@ class Middleware
         if (isset($this->router->collection->middleware['route_middleware']))
             if (isset($this->router->route->getPath()['middleware']) && class_exists($this->router->collection->middleware['route_middleware'][$this->router->route->getPath()['middleware']])) {
                 $class = $this->router->collection->middleware['route_middleware'][$this->router->route->getPath()['middleware']];
-                $mid_route = call_user_func($this->router->getConfig()['di'],$class);
-                if (method_exists($mid_route, 'handle')) $this->callHandler($mid_route);
+                $this->callHandler($class);
             }
     }
 
     /**
-     * @param $instance
+     * @param $class
      * @return mixed
      */
-    private function callHandler($instance){
-        $reflectionMethod = new ReflectionMethod($instance, 'handle');
-        $dependencies = [];
-        foreach ($reflectionMethod->getParameters() as $arg)
-            if (!is_null($arg->getClass()))
-                $dependencies[] = $this->getClass($arg->getClass()->name);
-        $dependencies = array_merge($dependencies,[$this->router->route]);
-        return $reflectionMethod->invokeArgs($instance, $dependencies);
+    private function callHandler($class){
+        $instance = call_user_func($this->router->getConfig()['di'],$class);
+        if (method_exists($instance, 'handle')) {
+            $reflectionMethod = new ReflectionMethod($instance, 'handle');
+            $dependencies = [];
+            foreach ($reflectionMethod->getParameters() as $arg)
+                if (!is_null($arg->getClass()))
+                    $dependencies[] = $this->getClass($arg->getClass()->name);
+            $dependencies = array_merge($dependencies, [$this->router->route]);
+            $reflectionMethod->invokeArgs($instance, $dependencies);
+        }
     }
 
     /**
@@ -113,5 +109,4 @@ class Middleware
                 break;
         }
     }
-
 }
