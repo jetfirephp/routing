@@ -95,12 +95,10 @@ class UriMatcher implements MatcherInterface
                 $end = array_pop($url);
                 $url = implode('/', array_map('ucwords', $url)).'/'.$end;
                 if (is_file(($template = rtrim($this->router->collection->getRoutes('view_dir_' . $i), '/') . $url . $extension))) {
-                    $block = $this->router->collection->getRoutes('block_'.$i);
-                    $viewDir = $this->router->collection->getRoutes('view_dir_'.$i);
                     $this->router->route->setTarget([
                         'dispatcher' => $this->dispatcher['matchTemplate'],
-                        'block' => $block,
-                        'view_dir' => $viewDir,
+                        'block' => $this->router->collection->getRoutes('block_'.$i),
+                        'view_dir' => $this->router->collection->getRoutes('view_dir_'.$i),
                         'template' => $template,
                         'extension' => str_replace('.', '', $extension),
                         'callback' => $this->router->getConfig()['templateCallback']
@@ -125,13 +123,12 @@ class UriMatcher implements MatcherInterface
                 $class =  (class_exists($this->router->collection->getRoutes('ctrl_namespace_' . $i). ucfirst($route[0]) . 'Controller'))
                     ? $this->router->collection->getRoutes('ctrl_namespace_' . $i). ucfirst($route[0]) . 'Controller'
                     : ucfirst($route[0]) . 'Controller';
-                if (isset($route[1]) && method_exists($class, $route[1])) {
-                    $block = $this->router->collection->getRoutes('block_'.$i);
-                    $viewDir = $this->router->collection->getRoutes('view_dir_'.$i);
+                $route[1] = isset($route[1])?$route[1]:'index';
+                if (method_exists($class, $route[1])) {
                     $this->router->route->setTarget([
                         'dispatcher' => $this->dispatcher['matchController'],
-                        'block' => $block,
-                        'view_dir' => $viewDir,
+                        'block' => $this->router->collection->getRoutes('block_'.$i),
+                        'view_dir' => $this->router->collection->getRoutes('view_dir_'.$i),
                         'di' => $this->router->getConfig()['di'],
                         'controller' => $class,
                         'action' => $route[1]

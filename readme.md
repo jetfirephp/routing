@@ -77,8 +77,8 @@ But you have to define your views directory path and controllers namespace to th
 
 ```php
 $options = [
-    'path' => '_VIEW_DIR_PATH_',
-    'namespace' => '_CONTROLLERS_NAMESPACE_'
+    'view_dir' => '_VIEW_DIR_PATH_',
+    'ctrl_namespace' => '_CONTROLLERS_NAMESPACE_'
 ];
 $collection = new \JetFire\Routing\RouteCollection(null,$options);
 // or
@@ -137,8 +137,8 @@ With Array Matcher you have to add your routes like this :
 
 ```php
 $options = [
-    'path' => '_VIEW_DIR_PATH_',
-    'namespace' => '_CONTROLLERS_NAMESPACE_'
+    'view_dir' => '_VIEW_DIR_PATH_',
+    'ctrl_namespace' => '_CONTROLLERS_NAMESPACE_'
 ];
 
 // addRoutes expect an array argument 
@@ -227,8 +227,8 @@ For example , if you have an administration for your website , you can create bl
 $collection = new \JetFire\Routing\RouteCollection();
 
 // Block routes
-$collection->addRoutes('admin_routes_path',['path' => 'admin_view_path' , 'namespace' => 'admin_controllers_namespace','prefix' => 'admin']);
-$collection->addRoutes('public_routes_path',['path' => 'public_view_path' , 'namespace' => 'public_controllers_namespace']);
+$collection->addRoutes('admin_routes_path',['view_dir' => 'admin_view_path' , 'ctrl_namespace' => 'admin_controllers_namespace','prefix' => 'admin']);
+$collection->addRoutes('public_routes_path',['view_dir' => 'public_view_path' , 'ctrl_namespace' => 'public_controllers_namespace']);
 
 // Create an instance of Router
 $router = new \JetFire\Routing\Router($collection)
@@ -275,9 +275,9 @@ Here are the list of options that you can edit for each collection routes :
 ```php
 $options = [
     // your view directory
-    'path' => 'view_directory',
+    'view_dir' => 'view_directory',
     // your controllers namespace
-    'namespace' => 'controllers_namespace',
+    'ctrl_namespace' => 'controllers_namespace',
     // your routes prefix
     'prefix' => 'your_prefix'
 ];

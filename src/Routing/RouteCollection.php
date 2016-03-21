@@ -50,9 +50,9 @@ class RouteCollection
         }
         $this->routes['routes_' . $this->countRoutes] = is_array($routes) ? $routes : [];
         $this->routes['view_dir_' . $this->countRoutes] = (isset($options['view_dir']) && !empty($options['view_dir'])) ? rtrim($options['view_dir'], '/') . '/' : '';
-        $this->routes['block_' . $this->countRoutes] = (isset($options['block']) && !empty($options['block'])) ? rtrim($options['block'], '/') . '/' : $this->routes['view_dir_' . $this->countRoutes];
         $this->routes['ctrl_namespace_' . $this->countRoutes] = (isset($options['ctrl_namespace']) && !empty($options['ctrl_namespace'])) ? trim($options['ctrl_namespace'], '\\') . '\\' : '';
         $this->routes['prefix_' . $this->countRoutes] = (isset($options['prefix']) && !empty($options['prefix'])) ? '/' . trim($options['prefix'], '/') : '';
+        $this->routes['block_' . $this->countRoutes] = (isset($options['block']) && !empty($options['block'])) ? rtrim($options['block'], '/') . '/' : $this->routes['view_dir_' . $this->countRoutes];
         $this->countRoutes++;
     }
 
@@ -107,7 +107,7 @@ class RouteCollection
     public function setMiddleware($middleware)
     {
         if (is_string($middleware)) $middleware = rtrim($middleware, '/');
-        if(is_array($middleware))
+        if (is_array($middleware))
             $this->middleware = $middleware;
         elseif (is_file($middleware) && is_array($mid = include $middleware))
             $this->middleware = $mid;

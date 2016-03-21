@@ -162,7 +162,7 @@ class Router
                     $this->config['matcherInstance'][$matcher] = new $matcher($this);
             foreach($this->config['matcherInstance'] as $instance) {
                 foreach (call_user_func([$instance, 'getMatcher']) as $match)
-                    if (call_user_func([$instance, $match])){ $this->callTarget(); break; }
+                    if (call_user_func_array([$instance, $match],[$this->route->getCallback()])){ $this->callTarget(); break; }
             }
             $this->response->setStatusCode($code);
         }

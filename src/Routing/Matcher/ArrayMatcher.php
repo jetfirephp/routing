@@ -118,8 +118,8 @@ class ArrayMatcher implements MatcherInterface
     {
         if (substr($this->request['route'], -1) == '*') {
             $pos = strpos($this->request['route'], '*');
-            if (substr($this->router->route->getUrl(), 0, $pos) == substr($this->request['route'], 0, $pos))
-                if (isset($this->request)) return true;
+            if (substr($this->router->route->getUrl(), 0, $pos) == substr($this->request['route'], 0, $pos) && isset($this->request['params']))
+                return true;
         }
         if (preg_match($regex, $this->router->route->getUrl(), $this->request['parameters'])) {
             array_shift($this->request['parameters']);
@@ -134,7 +134,8 @@ class ArrayMatcher implements MatcherInterface
     private function generateTarget()
     {
         if($this->validMethod()) {
-            foreach($this->matcher as $match) if(call_user_func([$this,$match])) break;
+            foreach($this->matcher as $match)
+                if(call_user_func_array([$this,$match],[$this->router->route->getCallback()])) break;
             $index = isset($this->request['collection_index']) ? $this->request['collection_index'] : 0;
             $this->router->route->addTarget('block',$this->router->collection->getRoutes('block_'.$index));
             $this->router->route->addTarget('view_dir',$this->router->collection->getRoutes('view_dir_'.$index));
@@ -176,14 +177,15 @@ class ArrayMatcher implements MatcherInterface
 
 
     /**
+     * @param $callback
      * @return bool
      */
-    public function matchClosure()
+    public function matchClosure($callback)
     {
-        if (is_callable($this->router->route->getCallback())) {
+        if (is_callable($callback)) {
             $this->router->route->setTarget([
                 'dispatcher' => $this->dispatcher['matchClosure'],
-                'closure' => $this->router->route->getCallback()
+                'closure' => $callback
             ]);
             return true;
         }
@@ -191,13 +193,14 @@ class ArrayMatcher implements MatcherInterface
     }
 
     /**
-     * @return bool
+     * @param $callback
      * @throws \Exception
+     * @return bool
      */
-    public function matchController()
+    public function matchController($callback)
     {
-        if (strpos($this->router->route->getCallback(), '@') !== false) {
-            $routes = explode('@', $this->router->route->getCallback());
+        if (is_string($callback) && strpos($callback, '@') !== false) {
+            $routes = explode('@', $callback);
             if (!isset($routes[1])) $routes[1] = 'index';
             $index = isset($this->request['collection_index']) ? $this->request['collection_index'] : 0;
             $class = (class_exists($routes[0]))
@@ -220,23 +223,24 @@ class ArrayMatcher implements MatcherInterface
     }
 
     /**
-     * @return bool
+     * @param $callback
      * @throws \Exception
+     * @return bool
      */
-    public function matchTemplate()
+    public function matchTemplate($callback)
     {
-        if(is_string($this->router->route->getCallback())) {
-            $path = trim($this->router->route->getCallback(), '/');
+        if(is_string($callback)) {
+            $path = trim($callback, '/');
             $extension = substr(strrchr($path, "."), 1);
             $index = isset($this->request['collection_index']) ? $this->request['collection_index'] : 0;
             $viewDir = $this->router->collection->getRoutes('view_dir_' . $index);
             $target = null;
-            if (in_array('.' . $extension, $this->router->getConfig()['templateExtension']) && is_file($viewDir . $path))
-                $target = $viewDir . $path;
+            if (in_array('.' . $extension, $this->router->getConfig()['templateExtension']) && (is_file($fullPath = $viewDir . $path) || is_file($fullPath = $path)))
+                $target = $fullPath;
             else {
                 foreach ($this->router->getConfig()['templateExtension'] as $ext) {
-                    if (is_file($viewDir . $path . $ext)) {
-                        $target = $viewDir . $path . $ext;
+                    if (is_file($fullPath = $viewDir . $path . $ext) || is_file($fullPath = $path . $ext)) {
+                        $target = $fullPath;
                         $extension = substr(strrchr($ext, "."), 1);
                         break;
                     }
