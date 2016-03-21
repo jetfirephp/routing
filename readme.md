@@ -192,6 +192,13 @@ return [
 		'use' => 'HomeController@page',
 		'arguments' => ['id' => '[0-9]+','slug' => '[a-z-]*'],
 	],
+	
+	// controller and template matching
+	// call first the controller and render then the template
+	'/home/log' => [
+	    'use' => 'HomeController@log',
+	    'template' => 'Home/log.php' //in your controller you can return an array of data that you can access in your template
+	]
 
 ];
 ```
@@ -213,6 +220,15 @@ return [
 		},
 		'arguments' => ['id' => '[0-9]+','slug' => '[a-z-]*'],
 	],
+	
+	// closure and template matching
+    // call first the closure and render then the template
+    '/home/log' => [
+        'use' => function(){
+            return ['name' => 'Peter'];
+        }
+        'template' => 'Home/log.php' // in log.php you can access the return data like this : $name ='Peter'
+    ]
 
 ];
 ```
@@ -432,8 +448,8 @@ $router->setResponses([
     // or a template
     '404' => 'app/Blocks/PublicBlock/Views/404.html',
     
-    // or a controller
-    '404' => 'ErrorController@notfound'
+    // or a controller method
+    '404' => 'ErrorController@notFound'
 ]);
 ```
 <a name="custom-matcher"></a>
@@ -447,15 +463,18 @@ class MyCustomMatch implements MatcherInterface{
     public function __construct(Router $router);
 
     // in this method you can check if the current uri match your expectation
-    // then you have to set the route target to be called with the dispatcher class name
-    // $this->router->route->setTarget(['dispatcher' => 'My\Custom\Dispatcher\Class\Name']);
+    // if it match you have to return an array with the route target to be called with the dispatcher class name
+    // return ['dispatcher' => 'My\Custom\Dispatcher\Class\Name'];
     public function match();
+    
+    // set your route target $this->router->route->setTarget($target);
+    public function setTarget($target = []);
 
-    // you can add multiple match method in the same macther
+    // you can add multiple match method in the same matcher
     // this matcher has to be called in match() method
     public function addMatcher($matcher);
 
-    // to retrieve your matchers
+    // to retrieve your matcher
     public function getMatcher();
 }
 
@@ -526,7 +545,7 @@ $router->setConfig([
 		// for other template engine
 		'tpl' => function($route) use ($tpl){
 			$tpl->load($route->getTarget('template'));
-			$tpl->setdata($route->getData());
+			$tpl->setData($route->getData());
 			$tpl->display();
 		}
 	],

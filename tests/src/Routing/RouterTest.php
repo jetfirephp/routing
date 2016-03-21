@@ -159,7 +159,9 @@ class RouterTest extends PHPUnit_Framework_TestCase
             array('/block1/home-2','Index2'),
             array('/home-3','Index3'),
             array('/contact','Contact'),
-            array('/block1/contact1','Contact1'),
+            array('/block1/contact1','Contact1Contact1'),
+            array('/block1/log','JetFire'),
+            array('/log2','JetFire'),
             array('/contact2','Contact2'),
         );
     }

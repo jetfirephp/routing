@@ -7,7 +7,10 @@ class Normal1Controller {
     }
 
     public function user($name = null){
-        echo 'User : '.$name;
+        return 'User : '.$name;
     }
 
+    public function log(){
+        return ['name' => 'JetFire'];
+    }
 }

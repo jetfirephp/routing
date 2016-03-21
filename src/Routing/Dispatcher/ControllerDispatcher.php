@@ -48,7 +48,8 @@ class ControllerDispatcher implements DispatcherInterface
         $dependencies = array_merge($dependencies,($this->route->getParameters() == '') ? [] : $this->route->getParameters());
         if ($this->response->getStatusCode() == 202)
             $this->response->setStatusCode(200);
-        return $this->response->setContent($reflectionMethod->invokeArgs($this->getController(), $dependencies));
+        if(is_array($content = $reflectionMethod->invokeArgs($this->getController(), $dependencies))) $this->route->addTarget('data',$content);
+        elseif(!is_null($content))$this->response->setContent($content);
     }
 
 

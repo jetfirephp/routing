@@ -18,14 +18,10 @@ interface MatcherInterface
     public function __construct(Router $router);
 
     /**
-     * @return mixed
-     */
-    public function match();
-
-    /**
      * @param string $matcher
      */
     public function addMatcher($matcher);
+
     /**
      * @return array
      */
@@ -42,4 +38,15 @@ interface MatcherInterface
      * @return mixed
      */
     public function addDispatcher($method,$class);
+
+    /**
+     * @return mixed
+     */
+    public function match();
+
+    /**
+     * @param array $target
+     * @return void
+     */
+    public function setTarget($target = []);
 }

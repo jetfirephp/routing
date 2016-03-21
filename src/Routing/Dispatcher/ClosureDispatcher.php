@@ -42,7 +42,8 @@ class ClosureDispatcher implements DispatcherInterface
             $this->response->setHeaders(['Content-Type' => 'text/html']);
         }
         $params = ($this->route->getParameters() == '') ? [] : $this->route->getParameters();
-        $this->response->setContent(call_user_func_array($this->route->getTarget('closure'), $params));
+        if(is_array($content = call_user_func_array($this->route->getTarget('closure'), $params))) $this->route->addTarget('data',$content);
+        elseif(!is_null($content)) $this->response->setContent($content);
     }
 
 }

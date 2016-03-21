@@ -118,16 +118,17 @@ class Router
     }
 
     /**
-     * @return mixed
+     *
      */
     public function callTarget()
     {
-        $target = $this->route->getTarget('dispatcher');
+        $target = is_array($this->route->getTarget('dispatcher'))?$this->route->getTarget('dispatcher'):[$this->route->getTarget('dispatcher')];
         if(!empty($target)) {
-            $this->dispatcher = new $target($this->route, $this->response);
-            return call_user_func([$this->dispatcher, 'call']);
+            foreach($target as $call) {
+                $this->dispatcher = new $call($this->route, $this->response);
+                call_user_func([$this->dispatcher, 'call']);
+            }
         }
-        return null;
     }
 
     /**
@@ -162,7 +163,11 @@ class Router
                     $this->config['matcherInstance'][$matcher] = new $matcher($this);
             foreach($this->config['matcherInstance'] as $instance) {
                 foreach (call_user_func([$instance, 'getMatcher']) as $match)
-                    if (call_user_func_array([$instance, $match],[$this->route->getCallback()])){ $this->callTarget(); break; }
+                    if (is_array($target = call_user_func_array([$instance, $match], [$this->route->getCallback()]))){
+                        call_user_func_array([$instance, 'setTarget'],[$target]);
+                        $this->callTarget();
+                        break;
+                    }
             }
             $this->response->setStatusCode($code);
         }

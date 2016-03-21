@@ -9,6 +9,13 @@ return [
         'arguments' => ['id' => '[0-9]+']
     ],
 
+    '/log2' => [
+        'use' => function(){
+            return ['name' => 'JetFire'];
+        },
+        'template' => 'log.php'
+    ],
+
 	'/home2'	=> [
 		'use' => 'JetFire\Routing\App\Block2\Controllers\Namespace2Controller@index',
 	],

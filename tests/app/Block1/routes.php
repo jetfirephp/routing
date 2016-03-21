@@ -20,7 +20,14 @@ return [
 
     '/contact1'	=> [
         'use' => 'Normal1Controller@contact',
+        'template' => 'contact.php',
         'name' => 'contact'
+    ],
+
+    '/log'	=> [
+        'use' => 'Normal1Controller@log',
+        'template' => 'log.php',
+        'name' => 'log'
     ],
 
 	'/search1-:id-:name' => [

@@ -16,11 +16,15 @@ class UriMatcher implements MatcherInterface
      */
     private $router;
 
+    /**
+     * @var array
+     */
+    private $request = [];
 
     /**
      * @var array
      */
-    private $matcher = ['matchController','matchTemplate'];
+    private $matcher = ['matchControllerTemplate'];
 
     /**
      * @var array
@@ -76,7 +80,8 @@ class UriMatcher implements MatcherInterface
     public function match()
     {
         foreach($this->matcher as $matcher){
-            if(call_user_func([$this,$matcher])) {
+            if(is_array($target = call_user_func([$this,$matcher]))) {
+                $this->setTarget($target);
                 $this->router->response->setStatusCode(202);
                 return true;
             }
@@ -85,7 +90,33 @@ class UriMatcher implements MatcherInterface
     }
 
     /**
-     * @return bool
+     * @param array $target
+     */
+    public function setTarget($target = []){
+        $index = isset($this->request['collection_index']) ? $this->request['collection_index'] : 0;
+        $this->router->route->setDetail($this->request);
+        $this->router->route->setTarget($target);
+        $this->router->route->addTarget('block', $this->router->collection->getRoutes('block_'.$index));
+        $this->router->route->addTarget('view_dir', $this->router->collection->getRoutes('view_dir_'.$index));
+    }
+
+    /**
+     * @return array|bool
+     */
+    public function matchControllerTemplate(){
+        if(is_array($ctrl = $this->matchController())) {
+            if (is_array($tpl = $this->matchTemplate())) {
+                return array_merge(array_merge($ctrl, $tpl),[
+                    'dispatcher' => [$this->dispatcher['matchController'], $this->dispatcher['matchTemplate']]
+                ]);
+            }
+            return $ctrl;
+        }
+        return $this->matchTemplate();
+    }
+
+    /**
+     * @return bool|array
      */
     public function matchTemplate()
     {
@@ -95,15 +126,13 @@ class UriMatcher implements MatcherInterface
                 $end = array_pop($url);
                 $url = implode('/', array_map('ucwords', $url)).'/'.$end;
                 if (is_file(($template = rtrim($this->router->collection->getRoutes('view_dir_' . $i), '/') . $url . $extension))) {
-                    $this->router->route->setTarget([
+                    $this->request['collection_index'] = $i;
+                    return [
                         'dispatcher' => $this->dispatcher['matchTemplate'],
-                        'block' => $this->router->collection->getRoutes('block_'.$i),
-                        'view_dir' => $this->router->collection->getRoutes('view_dir_'.$i),
                         'template' => $template,
                         'extension' => str_replace('.', '', $extension),
                         'callback' => $this->router->getConfig()['templateCallback']
-                    ]);
-                    return true;
+                    ];
                 }
             }
         }
@@ -111,7 +140,7 @@ class UriMatcher implements MatcherInterface
     }
 
     /**
-     * @return bool
+     * @return bool|array
      */
     public function matchController()
     {
@@ -125,16 +154,14 @@ class UriMatcher implements MatcherInterface
                     : ucfirst($route[0]) . 'Controller';
                 $route[1] = isset($route[1])?$route[1]:'index';
                 if (method_exists($class, $route[1])) {
-                    $this->router->route->setTarget([
+                    $this->request['parameters'] = array_slice($route, 2);
+                    $this->request['collection_index'] = $i;
+                    return [
                         'dispatcher' => $this->dispatcher['matchController'],
-                        'block' => $this->router->collection->getRoutes('block_'.$i),
-                        'view_dir' => $this->router->collection->getRoutes('view_dir_'.$i),
                         'di' => $this->router->getConfig()['di'],
                         'controller' => $class,
                         'action' => $route[1]
-                    ]);
-                    $this->router->route->addDetail('parameters', array_slice($route, 2));
-                    return true;
+                    ];
                 }
             }
             ++$i;
