@@ -138,7 +138,7 @@ class UriMatcher implements MatcherInterface
                     return [
                         'dispatcher' => $this->dispatcher['isTemplate'],
                         'template' => $template,
-                        'extension' => str_replace('.', '', $extension),
+                        'extension' => substr(strrchr($extension, "."), 1),
                         'callback' => $this->router->getConfig()['templateCallback']
                     ];
                 }
