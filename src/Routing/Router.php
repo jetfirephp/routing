@@ -1,6 +1,7 @@
 <?php
 
 namespace JetFire\Routing;
+use JetFire\Routing\Matcher\ArrayMatcher;
 
 /**
  * Class Router
@@ -168,14 +169,15 @@ class Router
     {
         if (isset($this->route->getDetail()['response_templates']) && isset($this->route->getDetail()['response_templates'][$code = $this->response->getStatusCode()])) {
             $this->route->setCallback($this->route->getDetail()['response_templates'][$code]);
-            foreach($this->matcher as $key => $instance) {
-                foreach (call_user_func([$instance, 'getResolver']) as $match)
-                    if (is_array($target = call_user_func_array([$instance, $match], [$this->route->getCallback()]))){
-                        call_user_func_array([$instance, 'setTarget'],[$target]);
-                        $this->callTarget();
-                        break;
-                    }
-            }
+            $matcher = null;
+            foreach($this->matcher as $instance) if($instance instanceof ArrayMatcher) $matcher = $instance;
+            if(is_null($matcher))$matcher = new ArrayMatcher($this);
+            foreach (call_user_func([$matcher, 'getResolver']) as $match)
+                if (is_array($target = call_user_func_array([$matcher, $match], [$this->route->getCallback()]))){
+                    call_user_func_array([$matcher, 'setTarget'],[$target]);
+                    $this->callTarget();
+                    break;
+                }
             $this->response->setStatusCode($code);
         }
         $this->response->send();

@@ -30,8 +30,9 @@ class UriMatcher implements MatcherInterface
      * @var array
      */
     private $dispatcher = [
-        'matchTemplate' => 'JetFire\Routing\Dispatcher\TemplateDispatcher',
-        'matchController' => 'JetFire\Routing\Dispatcher\ControllerDispatcher'
+        'isTemplate' => 'JetFire\Routing\Dispatcher\TemplateDispatcher',
+        'isController' => 'JetFire\Routing\Dispatcher\ControllerDispatcher',
+        'isControllerAndTemplate' => ['JetFire\Routing\Dispatcher\ControllerDispatcher','JetFire\Routing\Dispatcher\TemplateDispatcher'],
     ];
 
     /**
@@ -114,7 +115,7 @@ class UriMatcher implements MatcherInterface
         if(is_array($ctrl = $this->isController())) {
             if (is_array($tpl = $this->isTemplate())) {
                 return array_merge(array_merge($ctrl, $tpl),[
-                    'dispatcher' => [$this->dispatcher['matchController'], $this->dispatcher['matchTemplate']]
+                    'dispatcher' => $this->dispatcher['isControllerAndTemplate']
                 ]);
             }
             return $ctrl;
@@ -135,7 +136,7 @@ class UriMatcher implements MatcherInterface
                 if (is_file(($template = rtrim($this->router->collection->getRoutes('view_dir_' . $i), '/') . $url . $extension))) {
                     $this->request['collection_index'] = $i;
                     return [
-                        'dispatcher' => $this->dispatcher['matchTemplate'],
+                        'dispatcher' => $this->dispatcher['isTemplate'],
                         'template' => $template,
                         'extension' => str_replace('.', '', $extension),
                         'callback' => $this->router->getConfig()['templateCallback']
@@ -164,7 +165,7 @@ class UriMatcher implements MatcherInterface
                     $this->request['parameters'] = array_slice($route, 2);
                     $this->request['collection_index'] = $i;
                     return [
-                        'dispatcher' => $this->dispatcher['matchController'],
+                        'dispatcher' => $this->dispatcher['isController'],
                         'di' => $this->router->getConfig()['di'],
                         'controller' => $class,
                         'action' => $route[1]

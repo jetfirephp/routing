@@ -31,9 +31,11 @@ class ArrayMatcher implements MatcherInterface
      * @var array
      */
     private $dispatcher = [
-        'matchClosure' => 'JetFire\Routing\Dispatcher\ClosureDispatcher',
-        'matchController' => 'JetFire\Routing\Dispatcher\ControllerDispatcher',
-        'matchTemplate' => 'JetFire\Routing\Dispatcher\TemplateDispatcher',
+        'isClosure' => 'JetFire\Routing\Dispatcher\ClosureDispatcher',
+        'isController' => 'JetFire\Routing\Dispatcher\ControllerDispatcher',
+        'isTemplate' => 'JetFire\Routing\Dispatcher\TemplateDispatcher',
+        'isControllerAndTemplate' => ['JetFire\Routing\Dispatcher\ControllerDispatcher','JetFire\Routing\Dispatcher\TemplateDispatcher'],
+        'isClosureAndTemplate' => ['JetFire\Routing\Dispatcher\ClosureDispatcher','JetFire\Routing\Dispatcher\TemplateDispatcher'],
     ];
 
     /**
@@ -200,7 +202,7 @@ class ArrayMatcher implements MatcherInterface
         if(is_array($cls = $this->isClosure($callback))) {
             if (is_array($this->request['params']) && isset($this->request['params']['template']) && is_array($tpl = $this->isTemplate($this->request['params']['template']))) {
                 return array_merge(array_merge($cls, $tpl),[
-                    'dispatcher' => [$this->dispatcher['matchClosure'], $this->dispatcher['matchTemplate']]
+                    'dispatcher' => $this->dispatcher['isClosureAndTemplate']
                 ]);
             }
             return $cls;
@@ -217,7 +219,7 @@ class ArrayMatcher implements MatcherInterface
         if(is_array($ctrl = $this->isController($callback))) {
             if (is_array($this->request['params']) && isset($this->request['params']['template']) && is_array($tpl = $this->isTemplate($this->request['params']['template']))) {
                 return array_merge(array_merge($ctrl, $tpl),[
-                    'dispatcher' => [$this->dispatcher['matchController'], $this->dispatcher['matchTemplate']]
+                    'dispatcher' => $this->dispatcher['isControllerAndTemplate']
                 ]);
             }
             return $ctrl;
@@ -234,7 +236,7 @@ class ArrayMatcher implements MatcherInterface
     {
         if (is_callable($callback)) {
             return [
-                'dispatcher' => $this->dispatcher['matchClosure'],
+                'dispatcher' => $this->dispatcher['isClosure'],
                 'closure' => $callback
             ];
         }
@@ -259,7 +261,7 @@ class ArrayMatcher implements MatcherInterface
                 throw new \Exception('Class "' . $class . '." is not found');
             if (method_exists($class, $routes[1])) {
                 return [
-                    'dispatcher' => $this->dispatcher['matchController'],
+                    'dispatcher' => $this->dispatcher['isController'],
                     'di' => $this->router->getConfig()['di'],
                     'controller' => $class,
                     'action' => $routes[1]
@@ -297,7 +299,7 @@ class ArrayMatcher implements MatcherInterface
             if(is_null($target))
                 throw new \Exception('Template file "' . $path . '" is not found in "' . $viewDir . '"');
             return [
-                'dispatcher' => $this->dispatcher['matchTemplate'],
+                'dispatcher' => $this->dispatcher['isTemplate'],
                 'template'   => $target,
                 'extension'  => $extension,
                 'callback'   => $this->router->getConfig()['templateCallback']
