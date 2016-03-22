@@ -25,7 +25,7 @@ class ArrayMatcher implements MatcherInterface
     /**
      * @var array
      */
-    private $matcher = ['matchClosureTemplate','matchControllerTemplate','matchTemplate'];
+    private $resolver = ['isClosureAndTemplate','isControllerAndTemplate','isTemplate'];
 
     /**
      * @var array
@@ -45,18 +45,25 @@ class ArrayMatcher implements MatcherInterface
     }
 
     /**
-     * @param string $matcher
+     * @param array $resolver
      */
-    public function addMatcher($matcher){
-        $this->matcher[] = $matcher;
+    public function setResolver($resolver = []){
+        $this->resolver = $resolver;
+    }
+
+    /**
+     * @param string $resolver
+     */
+    public function addResolver($resolver){
+        $this->resolver[] = $resolver;
     }
 
     /**
      * @return array
      */
-    public function getMatcher()
+    public function getResolver()
     {
-        return $this->matcher;
+        return $this->resolver;
     }
 
     /**
@@ -134,8 +141,8 @@ class ArrayMatcher implements MatcherInterface
     private function generateTarget()
     {
         if($this->validMethod())
-            foreach($this->matcher as $match)
-                if (is_array($target = call_user_func_array([$this,$match],[$this->router->route->getCallback()]))) {
+            foreach($this->resolver as $resolver)
+                if (is_array($target = call_user_func_array([$this,$resolver],[$this->router->route->getCallback()]))) {
                     $this->setTarget($target);
                     $this->router->response->setStatusCode(202);
                     return true;
@@ -189,9 +196,9 @@ class ArrayMatcher implements MatcherInterface
      * @return array|bool
      * @throws \Exception
      */
-    public function matchClosureTemplate($callback){
-        if(is_array($cls = $this->matchClosure($callback))) {
-            if (is_array($this->request['params']) && isset($this->request['params']['template']) && is_array($tpl = $this->matchTemplate($this->request['params']['template']))) {
+    public function isClosureAndTemplate($callback){
+        if(is_array($cls = $this->isClosure($callback))) {
+            if (is_array($this->request['params']) && isset($this->request['params']['template']) && is_array($tpl = $this->isTemplate($this->request['params']['template']))) {
                 return array_merge(array_merge($cls, $tpl),[
                     'dispatcher' => [$this->dispatcher['matchClosure'], $this->dispatcher['matchTemplate']]
                 ]);
@@ -206,9 +213,9 @@ class ArrayMatcher implements MatcherInterface
      * @return array|bool
      * @throws \Exception
      */
-    public function matchControllerTemplate($callback){
-        if(is_array($ctrl = $this->matchController($callback))) {
-            if (is_array($this->request['params']) && isset($this->request['params']['template']) && is_array($tpl = $this->matchTemplate($this->request['params']['template']))) {
+    public function isControllerAndTemplate($callback){
+        if(is_array($ctrl = $this->isController($callback))) {
+            if (is_array($this->request['params']) && isset($this->request['params']['template']) && is_array($tpl = $this->isTemplate($this->request['params']['template']))) {
                 return array_merge(array_merge($ctrl, $tpl),[
                     'dispatcher' => [$this->dispatcher['matchController'], $this->dispatcher['matchTemplate']]
                 ]);
@@ -223,7 +230,7 @@ class ArrayMatcher implements MatcherInterface
      * @param $callback
      * @return bool|array
      */
-    public function matchClosure($callback)
+    public function isClosure($callback)
     {
         if (is_callable($callback)) {
             return [
@@ -239,7 +246,7 @@ class ArrayMatcher implements MatcherInterface
      * @throws \Exception
      * @return bool|array
      */
-    public function matchController($callback)
+    public function isController($callback)
     {
         if (is_string($callback) && strpos($callback, '@') !== false) {
             $routes = explode('@', $callback);
@@ -268,7 +275,7 @@ class ArrayMatcher implements MatcherInterface
      * @throws \Exception
      * @return bool|array
      */
-    public function matchTemplate($callback)
+    public function isTemplate($callback)
     {
         if(is_string($callback)) {
             $path = trim($callback, '/');

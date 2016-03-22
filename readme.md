@@ -5,6 +5,11 @@ A simple & powerful router for PHP 5.4+
 
 ### Features
 
+V1.2
+* [ClosureTemplate resolver](#closureTemplate-resolver)
+* [ControllerTemplate resolver](#controllerTemplate-resolver)
+* Possibility to choose a resolver
+
 V1.1
 * [Support dependency injection container](#config)
 * [Add your custom matcher and dispatcher](#custom-matcher)
@@ -15,9 +20,9 @@ V1.0
 * [Support reversed routing using named routes](#named-routes)
 * [Uri matcher](#uri-matcher)
 * [Array matcher](#array-matcher)
-* [Closure matching](#closure-matching)
-* [Template matching](#template-matching)
-* [Controller matching](#controller-matching)
+* [Closure resolver](#closure-resolver)
+* [Template resolver](#template-resolver)
+* [Controller resolver](#controller-resolver)
 * [Route Middleware](#middleware)
 * [Custom response](#response)
 * [Integration with other libraries](#libraries)
@@ -56,11 +61,18 @@ require __DIR__ . '/vendor/autoload.php';
 // Create RouteCollection instance
 $collection = new \JetFire\Routing\RouteCollection();
 
-// Define routes
+// Define your routes
 // ...
 
 // Create an instance of Router
 $router = new \JetFire\Routing\Router($collection)
+
+// select your matcher
+$matcher1 =  new \JetFire\Routing\Matcher\ArrayMatcher($router);
+$matcher2 =  new \JetFire\Routing\Matcher\UriMatcher($router);
+
+// set your matcher to the router
+$router->setMatcher([$matcher1,matcher2])
 
 // Run it!
 $router->run();
@@ -91,7 +103,19 @@ $collection->addRoutes(null,$options)
 
 For example if the uri is : `/home/index`
 
-##### Template matching
+##### Resolver
+
+Here are the list of Uri Matcher resolver :
+
+```php
+$resolver = [
+    'isControllerAndTemplate',
+    'isController',
+    'isTemplate'
+];
+```
+
+##### Template resolver
 
 Uri Matcher check if an `index.php` file exist in `/_VIEW_DIR_PATH_/Home` directory. 
 
@@ -106,9 +130,9 @@ $router->setConfig([
 ]);
 ```
 
-##### Controller matching
+##### Controller resolver
 
-If Uri Matcher failed to find the template then it checks if a controller with name `HomeController` located in the namespace `_CONTROLLERS_NAMESPACE_` has the `index` method.
+With Controller resolver, Uri Matcher checks if a controller with name `HomeController` located in the namespace `_CONTROLLERS_NAMESPACE_` has the `index` method.
 You have to require your controller before matching or you can use your custom autoloader to load your controllers.
 Uri Matcher support also dynamic routes. For example if the uri is : `/home/user/peter/parker` then you must have a method `user` with two parameters like this :
 
@@ -121,14 +145,6 @@ class HomeController {
 }
 ```
 
-If you want to disable Uri Matcher you have to remove 'JetFire\Routing\Matcher\UriMatcher' from your router configuration :
-
-```php
-$router->setConfig([
-    // default : 'matcher' => ['JetFire\Routing\Matcher\ArrayMatcher', 'JetFire\Routing\Match\UriMatcher']
-	'matcher' => ['JetFire\Routing\Matcher\ArrayMatcher'],
-]);
-```
  
 <a name="array-matcher"></a>
 #### Array Matcher
@@ -159,9 +175,24 @@ return [
 ];
 ```
 
-You have 3 actions possible for Array Routing. We assume you are using a separate file for your routes.
-<a name="template-matching"></a>
-##### Template matching
+##### Resolver
+
+Here are the list of Uri Matcher resolver :
+
+```php
+$resolver = [
+    'isControllerAndTemplate',
+    'isClosureAndTemplate',
+    'isClosure',
+    'isController',
+    'isTemplate'
+];
+```
+
+You have 5 actions possible for Array Routing. We assume you are using a separate file for your routes.
+
+<a name="template-resolver"></a>
+##### Template resolver
 
 ```php
 return [
@@ -177,9 +208,8 @@ return [
 
 ];
 ```
-<a name="controller-matching"></a>
-##### Controller Matching
-
+<a name="controller-resolver"></a>
+##### Controller resolver
 
 ```php
 return [
@@ -193,21 +223,37 @@ return [
 		'arguments' => ['id' => '[0-9]+','slug' => '[a-z-]*'],
 	],
 	
-	// controller and template matching
-	// call first the controller and render then the template
-	'/home/log' => [
-	    'use' => 'HomeController@log',
-	    'template' => 'Home/log.php' //in your controller you can return an array of data that you can access in your template
-	]
-
 ];
 ```
-<a name="closure-matching"></a>
-##### Closure
+<a name="controllerTemplate-resolver"></a>
+##### Controller and Template resolver
 
 ```php
 return [
 	
+	// controller and template resolver
+	// call first the controller and render then the template
+	// if the template is not found, the controller is returned
+	'/home/log' => [
+	    'use' => 'HomeController@log',
+	    'template' => 'Home/log.php', //in your controller you can return an array of data that you can access in your template
+	],
+	
+	// dynamic route with arguments
+    '/home/user-:id-:slug' => [
+        'use' => 'HomeController@page',
+        'template' => 'Home/log.php',
+        'arguments' => ['id' => '[0-9]+','slug' => '[a-z-]*'],
+    ],
+
+];
+```
+<a name="closure-resolver"></a>
+##### Closure resolver
+
+```php
+return [
+		
 	// static route
 	'/home/index' => function(){
 		return 'Hello world !';
@@ -221,15 +267,31 @@ return [
 		'arguments' => ['id' => '[0-9]+','slug' => '[a-z-]*'],
 	],
 	
+];
+```
+<a name="closureTemplate-resolver"></a>
+##### Closure and Template resolver
+
+```php
+return [
+	
 	// closure and template matching
     // call first the closure and render then the template
     '/home/log' => [
         'use' => function(){
             return ['name' => 'Peter'];
         }
-        'template' => 'Home/log.php' // in log.php you can access the return data like this : $name ='Peter'
-    ]
-
+        'template' => 'Home/log.php', // in log.php you can access the return data like this : $name ='Peter'
+    ],
+    
+    '/home/user-:id-:slug' => [
+        'use' => function($id,$slug){
+            return ['id' => $id,'slug' => $slug];
+        },
+        'template' => 'Home/log.php',
+        'arguments' => ['id' => '[0-9]+','slug' => '[a-z-]*'],
+    ],
+    
 ];
 ```
 
@@ -248,6 +310,8 @@ $collection->addRoutes('public_routes_path',['view_dir' => 'public_view_path' , 
 
 // Create an instance of Router
 $router = new \JetFire\Routing\Router($collection)
+// Select your matcher
+$router->addRouter(new \JetFire\Routing\Matcher\ArrayMatcher($router));
 
 // Run it!
 $router->run();
@@ -259,10 +323,6 @@ Here are the list of router configuration that you can edit :
 
 ```php
 $router->setConfig([
-	
-	// You can enable/disable a matcher or you can add you custom matcher class 
-	// default matcher are JetFire\Routing\Matcher\ArrayMatcher and JetFire\Routing\Matcher\UriMatcher
-	'matcher' => ['JetFire\Routing\Matcher\ArrayMatcher', 'JetFire\Routing\Matcher\UriMatcher'],
 
 	// You can add/remove extension for views
 	// default extension for views
@@ -391,15 +451,15 @@ return [
 	// block middleware are called when the current route block match one of the following block
     'block_middleware' => [
     	// You define here for each block the middleware class to be called
-        'app/Blocks/PublicBlock/' => 'app\Middleware\Public',
-        'app/Blocks/AdminBlock/' => 'app\Middleware\Admin',
-        'app/Blocks/UserBlock/' => 'app\Middleware\User',
+        '/app/Blocks/PublicBlock/' => 'app\Middleware\Public',
+        '/app/Blocks/AdminBlock/' => 'app\Middleware\Admin',
+        '/app/Blocks/UserBlock/' => 'app\Middleware\User',
     ],
 	
 	// class middleware are called when the controller router match one of the following controller
     'class_middleware' => [
     	// You define here for each controller the middleware class to be called
-        'app/Blocks/PublicBlock/Controllers/HomeController' => 'app\Middleware\Home',
+        '/app/Blocks/PublicBlock/Controllers/HomeController' => 'app\Middleware\Home',
     ],
 
 	// route middleware are called when the current route match one of the following middleware name
@@ -426,7 +486,8 @@ namespace app\Middleware;
 class Global{
 
 	// Middleware class must implements handle method
-	public function handle(Route $route){
+	// object passed in argument will be inject automatically
+	public function handle(){
 		// here you put your code
 		// ...
 	}
@@ -458,24 +519,32 @@ $router->setResponses([
 If the default matcher and dispatcher doesn't match your expectation, you can write your own matcher and dispatcher like this :
 
 ```php
-class MyCustomMatch implements MatcherInterface{
+class MyCustomMatcher implements MatcherInterface{
     
     public function __construct(Router $router);
 
     // in this method you can check if the current uri match your expectation
-    // if it match you have to return an array with the route target to be called with the dispatcher class name
-    // return ['dispatcher' => 'My\Custom\Dispatcher\Class\Name'];
+    // return true or false
+    // if it match you have to set your route target with an array of params and the dispatcher class name to be called
+    // $this->setTarget(['dispatcher' => '\My\Custom\Dispatcher\Class\Name', 'other_params' => 'values']);
     public function match();
     
     // set your route target $this->router->route->setTarget($target);
     public function setTarget($target = []);
 
-    // you can add multiple match method in the same matcher
-    // this matcher has to be called in match() method
-    public function addMatcher($matcher);
-
-    // to retrieve your matcher
-    public function getMatcher();
+    // set your resolver
+    public function setResolver($resolver = []);
+    
+    // you can add multiple resolver method in the same matcher
+    public function addResolver($resolver);
+    
+    // to retrieve your resolver
+    public function getResolver();
+    
+    // dispatcher yo be called
+    public function setDispatcher($dispatcher = []);
+    
+    public function addDispatcher($dispatcher);
 }
 
 class MyCustomDispatcher implements DispatcherInterface{
@@ -498,10 +567,10 @@ class MyCustomMatcher extends ArrayMatcher implements MatcherInterface{
     public function __construct(Router $router){
         parent::__construct($router);
         // your custom match method
-        $this->addMatcher('customMatch');
+        $this->addResolver('customResolver');
     }
 
-    public function customMatch(){
+    public function customResolver(){
         // your code here
         // ...
         // then you set the route target with the dispatcher
@@ -580,6 +649,7 @@ $router->
 	route										// JetFire\Routing\Route instance
 	collection									// JetFire\Routing\RouteCollection instance
 	middleware									// the middleware instance
+	resolver									// list of resolver
 	dispatcher									// the dispatcher instance
 	setConfig($config) 							// router configuration
 	getConfig() 								// get router configuration

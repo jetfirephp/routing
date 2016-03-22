@@ -24,7 +24,7 @@ class UriMatcher implements MatcherInterface
     /**
      * @var array
      */
-    private $matcher = ['matchControllerTemplate'];
+    private $resolver = ['isControllerAndTemplate'];
 
     /**
      * @var array
@@ -43,18 +43,25 @@ class UriMatcher implements MatcherInterface
     }
 
     /**
-     * @param string $matcher
+     * @param array $resolver
      */
-    public function addMatcher($matcher){
-        $this->matcher[] = $matcher;
+    public function setResolver($resolver = []){
+        $this->resolver = $resolver;
+    }
+
+    /**
+     * @param string $resolver
+     */
+    public function addResolver($resolver){
+        $this->resolver[] = $resolver;
     }
 
     /**
      * @return array
      */
-    public function getMatcher()
+    public function getResolver()
     {
-        return $this->matcher;
+        return $this->resolver;
     }
 
     /**
@@ -79,8 +86,8 @@ class UriMatcher implements MatcherInterface
      */
     public function match()
     {
-        foreach($this->matcher as $matcher){
-            if(is_array($target = call_user_func([$this,$matcher]))) {
+        foreach($this->resolver as $resolver){
+            if(is_array($target = call_user_func([$this,$resolver]))) {
                 $this->setTarget($target);
                 $this->router->response->setStatusCode(202);
                 return true;
@@ -103,22 +110,22 @@ class UriMatcher implements MatcherInterface
     /**
      * @return array|bool
      */
-    public function matchControllerTemplate(){
-        if(is_array($ctrl = $this->matchController())) {
-            if (is_array($tpl = $this->matchTemplate())) {
+    public function isControllerAndTemplate(){
+        if(is_array($ctrl = $this->isController())) {
+            if (is_array($tpl = $this->isTemplate())) {
                 return array_merge(array_merge($ctrl, $tpl),[
                     'dispatcher' => [$this->dispatcher['matchController'], $this->dispatcher['matchTemplate']]
                 ]);
             }
             return $ctrl;
         }
-        return $this->matchTemplate();
+        return $this->isTemplate();
     }
 
     /**
      * @return bool|array
      */
-    public function matchTemplate()
+    public function isTemplate()
     {
         foreach ($this->router->getConfig()['templateExtension'] as $extension) {
             for ($i = 0; $i < $this->router->collection->countRoutes; ++$i) {
@@ -142,7 +149,7 @@ class UriMatcher implements MatcherInterface
     /**
      * @return bool|array
      */
-    public function matchController()
+    public function isController()
     {
         $routes = array_slice(explode('/', $this->router->route->getUrl()), 1);
         $i = 0;

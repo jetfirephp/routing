@@ -26,15 +26,17 @@ class Router
      */
     public $middleware;
     /**
+     * @var array
+     */
+    public $matcher = [];
+    /**
      * @var
      */
     public $dispatcher;
-
     /**
      * @var array
      */
     private $config = [
-        'matcher'            => ['JetFire\Routing\Matcher\ArrayMatcher', 'JetFire\Routing\Matcher\UriMatcher'],
         'templateExtension'      => ['.html', '.php', '.json', '.xml'],
         'templateCallback'       => [],
         'di'                 => '',
@@ -74,10 +76,19 @@ class Router
     }
 
     /**
+     * @param object|array $matcher
+     */
+    public function setMatcher($matcher){
+        if(is_object($matcher))
+            $matcher = [$matcher];
+        $this->matcher = $matcher;
+    }
+
+    /**
      * @param string $matcher
      */
     public function addMatcher($matcher){
-        $this->config['matcher'][] = $matcher;
+        $this->matcher[] = $matcher;
     }
 
     /**
@@ -109,9 +120,8 @@ class Router
      */
     public function match()
     {
-        foreach ($this->config['matcher'] as $matcher) {
-            $this->config['matcherInstance'][$matcher] = new $matcher($this);
-            if (call_user_func([$this->config['matcherInstance'][$matcher], 'match']))
+        foreach ($this->matcher as $key => $matcher) {
+            if (call_user_func([$this->matcher[$key], 'match']))
                 return true;
         }
         return false;
@@ -158,11 +168,8 @@ class Router
     {
         if (isset($this->route->getDetail()['response_templates']) && isset($this->route->getDetail()['response_templates'][$code = $this->response->getStatusCode()])) {
             $this->route->setCallback($this->route->getDetail()['response_templates'][$code]);
-            if(!isset($this->config['matcherInstance']))
-                foreach ($this->config['matcher'] as $matcher)
-                    $this->config['matcherInstance'][$matcher] = new $matcher($this);
-            foreach($this->config['matcherInstance'] as $instance) {
-                foreach (call_user_func([$instance, 'getMatcher']) as $match)
+            foreach($this->matcher as $key => $instance) {
+                foreach (call_user_func([$instance, 'getResolver']) as $match)
                     if (is_array($target = call_user_func_array([$instance, $match], [$this->route->getCallback()]))){
                         call_user_func_array([$instance, 'setTarget'],[$target]);
                         $this->callTarget();

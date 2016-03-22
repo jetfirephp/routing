@@ -18,14 +18,19 @@ interface MatcherInterface
     public function __construct(Router $router);
 
     /**
-     * @param string $matcher
+     * @param array $resolver
      */
-    public function addMatcher($matcher);
+    public function setResolver($resolver = []);
+
+    /**
+     * @param string $resolver
+     */
+    public function addResolver($resolver);
 
     /**
      * @return array
      */
-    public function getMatcher();
+    public function getResolver();
 
     /**
      * @param array $dispatcher

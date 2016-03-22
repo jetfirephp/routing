@@ -1,6 +1,8 @@
 <?php
 
 namespace JetFire\Routing\App;
+use JetFire\Routing\Matcher\ArrayMatcher;
+use JetFire\Routing\Matcher\UriMatcher;
 use JetFire\Routing\RouteCollection;
 use JetFire\Routing\Router;
 use PHPUnit_Framework_TestCase;
@@ -37,9 +39,11 @@ class RouterTest extends PHPUnit_Framework_TestCase
         ]);
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $this->router = new Router($collection);
+        $this->router->addMatcher(new ArrayMatcher($this->router));
+        $this->router->addMatcher(new UriMatcher($this->router));
     }
 
-    public function smartMatchWithoutRoutesProvider()
+    public function uriMatchWithoutRoutesProvider()
     {
         return array(
             array(ROOT.'/Views','JetFire\Routing\App\Controllers','/app/index', 'Index',''),
@@ -53,20 +57,21 @@ class RouterTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @dataProvider smartMatchWithoutRoutesProvider
+     * @dataProvider uriMatchWithoutRoutesProvider
      * @param $path
      * @param $namespace
      * @param $url
      * @param $output
      * @param $prefix
      */
-    public function testSmartMatchWithoutRoutes($path,$namespace,$url,$output,$prefix){
+    public function testUriMatchWithoutRoutes($path,$namespace,$url,$output,$prefix){
         $collection = new RouteCollection(null,[
             'view_dir' => $path,
             'ctrl_namespace' => $namespace,
             'prefix' => $prefix
         ]);
         $this->router = new Router($collection);
+        $this->router->addMatcher(new UriMatcher($this->router));
         $this->router->setUrl($url);
         $this->assertTrue($this->router->match());
         $this->router->callTarget();
@@ -74,7 +79,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $this->expectOutputString($output);
     }
 
-    public function smartMatchTemplate()
+    public function uriMatchTemplate()
     {
         return array(
           array('/smart/index','Smart'),
@@ -84,11 +89,11 @@ class RouterTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @dataProvider smartMatchTemplate
+     * @dataProvider uriMatchTemplate
      * @param $url
      * @param $output
      */
-    public function testSmartMatchTemplate($url,$output)
+    public function testUriMatchTemplate($url,$output)
     {
         $this->router->setUrl($url);
         $this->assertTrue($this->router->match());
@@ -97,7 +102,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $this->expectOutputString($output);
     }
 
-    public function smartMatchController()
+    public function uriMatchController()
     {
         return array(
             array('/normal/contact','Contact'),
@@ -110,11 +115,11 @@ class RouterTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @dataProvider smartMatchController
+     * @dataProvider uriMatchController
      * @param $url
      * @param $output
      */
-    public function testSmartMatchController($url,$output)
+    public function testUriMatchController($url,$output)
     {
         $this->router->setUrl($url);
         $this->assertTrue($this->router->match());
@@ -188,6 +193,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
         ]);
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $router = new Router($collection);
+        $router->addMatcher(new ArrayMatcher($router));
         $router->setUrl('/search');
         $this->assertTrue( $router->match());
         $router->callTarget();
@@ -202,6 +208,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
             'ctrl_namespace' => 'JetFire\Routing\App\Controllers',
         ]);
         $router = new Router($collection);
+        $router->addMatcher(new ArrayMatcher($router));
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $router->setUrl('/search');
         $this->assertFalse( $router->match());
