@@ -54,6 +54,7 @@ class TemplateDispatcher implements DispatcherInterface
         else {
             ob_start();
             if(isset($this->route->getTarget()['data']))extract($this->route->getTarget('data'));
+            if(isset($this->route->getParams()['data']))extract($this->route->getParams()['data']);
             require($this->route->getTarget('template'));
             $this->response->setContent(ob_get_clean());
         }
