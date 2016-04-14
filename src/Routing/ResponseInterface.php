@@ -5,7 +5,7 @@ namespace JetFire\Routing;
 
 interface ResponseInterface {
 
-    public function __construct($content = '', $status = 200, $headers = array());
+    public function __construct($content, $status = 200, $headers = array());
 
     public function sendContent();
     public function send();
