@@ -5,6 +5,9 @@ A simple & powerful router for PHP 5.4+
 
 ### Features
 
+V1.3
+* [Support subdomain](#subdomain)
+
 V1.2
 * [ClosureTemplate resolver](#closureTemplate-resolver)
 * [ControllerTemplate resolver](#controllerTemplate-resolver)
@@ -72,7 +75,7 @@ $matcher1 =  new \JetFire\Routing\Matcher\ArrayMatcher($router);
 $matcher2 =  new \JetFire\Routing\Matcher\UriMatcher($router);
 
 // set your matcher to the router
-$router->setMatcher([$matcher1,matcher2])
+$router->setMatcher([$matcher1,$matcher2])
 
 // Run it!
 $router->run();
@@ -622,6 +625,28 @@ $router->setConfig([
 	// Other configuration
 	// ...
 ]);
+```
+
+<a name="subdomain"></a>
+### Subdomain
+
+```php
+return [
+    '{subdomain}.{host}/home' => [
+         'use' => 'AdminController@index',
+         'name' => 'admin.home.index',
+         'subdomain' => 'admin' // could be a regex for multiple subdomain
+    ]
+];
+```
+
+Or if you want to add a subdomain for a bloc, you have to add this line in your route collection options :
+
+```php
+$options = [
+    // ...
+    'subdomain' => 'your_subdomain'
+];
 ```
 
 ### API

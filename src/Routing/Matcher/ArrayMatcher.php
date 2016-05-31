@@ -93,17 +93,55 @@ class ArrayMatcher implements MatcherInterface
         $this->request = [];
         for ($i = 0; $i < $this->router->collection->countRoutes; ++$i) {
             $this->request['prefix'] = ($this->router->collection->getRoutes('prefix_' . $i) != '') ? $this->router->collection->getRoutes('prefix_' . $i) : '';
+            $this->request['subdomain'] = ($this->router->collection->getRoutes('subdomain_' . $i) != '') ? $this->router->collection->getRoutes('subdomain_' . $i) : '';
             foreach ($this->router->collection->getRoutes('routes_' . $i) as $route => $params) {
                 $this->request['params'] = $params;
                 $this->request['collection_index'] = $i;
-                $this->request['route'] = preg_replace_callback('#:([\w]+)#', [$this, 'paramMatch'], '/' . trim(trim($this->request['prefix'], '/') . '/' . trim($route, '/'), '/'));
-                if ($this->routeMatch('#^' . $this->request['route'] . '$#')) {
-                    $this->setCallback();
-                    return $this->generateTarget();
+                if($this->checkSubdomain($route)) {
+                    $route = strstr($route, '/');
+                    $this->request['route'] = preg_replace_callback('#:([\w]+)#', [$this, 'paramMatch'], '/' . trim(trim($this->request['prefix'], '/') . '/' . trim($route, '/'), '/'));
+                    if ($this->routeMatch('#^' . $this->request['route'] . '$#')) {
+                        $this->setCallback();
+                        return $this->generateTarget();
+                    }
                 }
             }
         }
         return false;
+    }
+
+    /**
+     * @param $route
+     * @return bool
+     */
+    private function checkSubdomain($route){
+        $url = (isset($_SERVER['REQUEST_SCHEME']) ? $_SERVER['REQUEST_SCHEME'] : 'http') . '://' . ($host = (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME']));
+        $domain = $this->router->collection->getDomain($url);
+        if(!empty($this->request['subdomain']) && $route[0] == '/') $route = trim($this->request['subdomain'],'.').'.'.$domain.$route;
+        if($route[0] == '/'){
+            return ($host != $domain) ? false : true;
+        }elseif($route[0] != '/' && $host != $domain){
+            $route = substr($route, 0, strpos($route, "/"));
+            $route = str_replace('{host}', $domain, $route);
+            $route = preg_replace_callback('#{subdomain}#', [$this, 'subdomainMatch'], $route);
+            if (preg_match('#^' . $route . '$#', $host, $this->request['called_subdomain'])) {
+                $this->request['called_subdomain'] = array_shift($this->request['called_subdomain']);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @return string
+     */
+    private function subdomainMatch()
+    {
+        if (is_array($this->request['params']) && isset($this->request['params']['subdomain'])) {
+            $this->request['params']['subdomain'] = str_replace('(', '(?:', $this->request['params']['subdomain']);
+            return '(' . $this->request['params']['subdomain'] . ')';
+        }
+        return '([^/]+)';
     }
 
     /**
