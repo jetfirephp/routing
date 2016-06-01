@@ -97,16 +97,12 @@ class Middleware
         switch($class){
             case 'JetFire\Routing\Route':
                 return $this->router->route;
-                break;
             case 'JetFire\Routing\Router':
                 return $this->router;
-                break;
             case 'JetFire\Routing\RouteCollection':
                 return $this->router->collection;
-                break;
             default:
                 return call_user_func_array($this->router->getConfig()['di'],[$class]);
-                break;
         }
     }
 }

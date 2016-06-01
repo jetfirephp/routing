@@ -8,6 +8,7 @@ namespace JetFire\Routing;
  * @method getParameters()
  * @method getBlock()
  * @method getPath()
+ * @method string getParams()
  */
 class Route
 {

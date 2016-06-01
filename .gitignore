@@ -1,1 +1,5 @@
 /vendor
+/Block1
+Autoload.php
+.htaccess
+index.php

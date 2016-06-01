@@ -153,7 +153,7 @@ class RouteCollection
 
     /**
      * @param $url
-     * @return bool
+     * @return string
      */
     public function getDomain($url)
     {
