@@ -126,12 +126,14 @@ class RouteCollection
      */
     public function generateRoutesPath()
     {
-        $root = (isset($_SERVER['REQUEST_SCHEME'])?$_SERVER['REQUEST_SCHEME']:'http') . '://' . ($domain = (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'])) . str_replace('/index.php', '', $_SERVER['SCRIPT_NAME']);
+        $root = ($protocol = (isset($_SERVER['REQUEST_SCHEME'])?$_SERVER['REQUEST_SCHEME']:'http')) . '://' . ($domain = (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'])) . str_replace('/index.php', '', $_SERVER['SCRIPT_NAME']);
         if (strpos($domain, ($new_domain = $this->getDomain($root))) !== false)
             $root = str_replace($domain, $new_domain, $root);
         $count = 0;
         for ($i = 0; $i < $this->countRoutes; ++$i) {
             $prefix = (isset($this->routes['prefix_' . $i])) ? $this->routes['prefix_' . $i] : '';
+            $subdomain = (isset($this->routes['subdomain_' . $i])) ? $this->routes['subdomain_' . $i] : '';
+            $url = (!empty($subdomain)) ? str_replace($protocol.'://',$protocol.'://'.$subdomain.'.' ,$root) : $root;
             if (isset($this->routes['routes_' . $i]))
                 foreach ($this->routes['routes_' . $i] as $route => $dependencies) {
                     if (is_array($dependencies) && isset($dependencies['use']))
@@ -141,9 +143,13 @@ class RouteCollection
                     else
                         $use = $route;
                     if (isset($route[0]) && $route[0] == '/') {
-                        (!is_callable($dependencies) && isset($dependencies['name'])) ? $this->routesByName[$use . '#' . $dependencies['name']] = $root . $prefix . $route : $this->routesByName[$use] = $root . $prefix . $route;
+                        (!is_callable($dependencies) && isset($dependencies['name']))
+                            ? $this->routesByName[$use . '#' . $dependencies['name']] = $url . $prefix . $route
+                            : $this->routesByName[$use] = $url . $prefix . $route;
                     } else {
-                        (!is_callable($dependencies) && isset($dependencies['name'])) ? $this->routesByName[$use . '#' . $dependencies['name']] = $_SERVER['REQUEST_SCHEME'] . '://' . str_replace('{host}', $new_domain, $route) . $prefix : $this->routesByName[$use] = $_SERVER['REQUEST_SCHEME'] . '://' . str_replace('{host}', $new_domain, $route) . $prefix;
+                        (!is_callable($dependencies) && isset($dependencies['name']))
+                            ? $this->routesByName[$use . '#' . $dependencies['name']] = $protocol . '://' . str_replace('{host}', $new_domain, $route) . $prefix
+                            : $this->routesByName[$use] = $protocol . '://' . str_replace('{host}', $new_domain, $route) . $prefix;
                     }
                     $count++;
                 }
