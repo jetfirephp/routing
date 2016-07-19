@@ -90,6 +90,8 @@ class UriMatcher implements MatcherInterface
         foreach($this->resolver as $resolver){
             if(is_array($target = call_user_func([$this,$resolver]))) {
                 $this->setTarget($target);
+                if($this->router->middleware->globalMiddleware() === false || $this->router->middleware->blockMiddleware() === false || $this->router->middleware->classMiddleware() === false || $this->router->middleware->routeMiddleware() === false)
+                    return null;
                 $this->router->response->setStatusCode(202);
                 return true;
             }

@@ -55,6 +55,7 @@ class Router
         $this->response = is_null($response)? new Response() : $response;
         $this->response->setStatusCode(404);
         $this->route = is_null($route)? new Route() : $route;
+        $this->middleware = new Middleware($this);
         $this->config['di'] = function($class){
             return new $class;
         };
@@ -100,7 +101,6 @@ class Router
         $this->setUrl();
         if ($this->config['generateRoutesPath']) $this->collection->generateRoutesPath();
         if ($this->match()) {
-            $this->handle();
             $this->callTarget();
         }
         $this->callResponse();
@@ -141,19 +141,7 @@ class Router
             }
         }
     }
-
-    /**
-     * @description handle middleware
-     */
-    private function handle()
-    {
-        $this->middleware = new Middleware($this);
-        $this->middleware->globalMiddleware();
-        $this->middleware->blockMiddleware();
-        $this->middleware->classMiddleware();
-        $this->middleware->routeMiddleware();
-    }
-
+    
     /**
      * @param array $responses
      */

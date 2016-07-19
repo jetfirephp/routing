@@ -42,14 +42,20 @@ class ControllerDispatcher implements DispatcherInterface
     {
         $reflectionMethod = new ReflectionMethod($this->route->getTarget('controller'), $this->route->getTarget('action'));
         $dependencies = [];
-        foreach ($reflectionMethod->getParameters() as $arg)
-            if (!is_null($arg->getClass()))
-                $dependencies[] = call_user_func_array($this->route->getTarget('di'),[$arg->getClass()->name]);
-        $dependencies = array_merge($dependencies,($this->route->getParameters() == '') ? [] : $this->route->getParameters());
-        if ($this->response->getStatusCode() == 202)
-            $this->response->setStatusCode(200);
-        if(is_array($content = $reflectionMethod->invokeArgs($this->getController(), $dependencies))) $this->route->addTarget('data',$content);
-        elseif(!is_null($content))$this->response->setContent($content);
+        $count = 0;
+        foreach ($reflectionMethod->getParameters() as $arg) {
+            (is_null($arg->getClass()))
+                ? $count++
+                : $dependencies[] = call_user_func_array($this->route->getTarget('di'), [$arg->getClass()->name]);
+        }
+        if($count == count($this->route->getParameters())) {
+            $dependencies = array_merge($dependencies, ($this->route->getParameters() == '') ? [] : $this->route->getParameters());
+            if ($this->response->getStatusCode() == 202)
+                $this->response->setStatusCode(200);
+            if (is_array($content = $reflectionMethod->invokeArgs($this->getController(), $dependencies))) $this->route->addTarget('data', $content);
+            elseif (!is_null($content)) $this->response->setContent($content);
+        }else
+            $this->response->setStatusCode(404);
     }
 
 

@@ -7,6 +7,7 @@ A simple & powerful router for PHP 5.4+
 
 V1.3
 * [Support subdomain](#subdomain)
+* [Support group resolver](#group-resolver)
 
 V1.2
 * [ClosureTemplate resolver](#closureTemplate-resolver)
@@ -251,6 +252,24 @@ return [
 
 ];
 ```
+<a name="group-resolver"></a>
+##### Controller group resolver
+
+```php
+return [
+
+	// suppose we have the following methods in the AccountController :
+	// public function create();
+	// public function read($id);
+	// public function update($id);
+	// public function destroy($id);
+	// if the uri is /account/create the router will call the associated method in the controller
+	'/account/*' => [
+	    'use' => 'AccountController@{method}',
+	],
+
+];
+```
 <a name="closure-resolver"></a>
 ##### Closure resolver
 
@@ -438,7 +457,7 @@ $collection->setPrefix(['prefix_1','prefix_2']);
 <a name="middleware"></a>
 ### Middleware
 
-Middlewares are called after the route target is defined.
+Middlewares are called after a route match the current uri. If the middleware return false, the current route is skipped.
 You have to create a middleware config file like this :
 
 ```php

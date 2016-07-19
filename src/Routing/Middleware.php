@@ -31,7 +31,8 @@ class Middleware
     {
         if (isset($this->router->collection->middleware['global_middleware']))
             foreach ($this->router->collection->middleware['global_middleware'] as $class)
-                if (class_exists($class)) $this->callHandler($class);
+                if (class_exists($class)) return $this->callHandler($class);
+        return null;
     }
 
     /**
@@ -42,8 +43,9 @@ class Middleware
         if (isset($this->router->collection->middleware['block_middleware']))
             if (isset($this->router->collection->middleware['block_middleware'][$this->router->route->getTarget('block')]) && class_exists($this->router->collection->middleware['block_middleware'][$this->router->route->getTarget('block')])) {
                 $class = $this->router->collection->middleware['block_middleware'][$this->router->route->getTarget('block')];
-                $this->callHandler($class);
+                return $this->callHandler($class);
             }
+        return null;
     }
 
     /**
@@ -55,9 +57,10 @@ class Middleware
             $ctrl = str_replace('\\', '/', $this->router->route->getTarget('controller'));
             if (isset($this->router->collection->middleware['class_middleware'][$ctrl]) && class_exists($this->router->route->getTarget('controller'))) {
                 $class = $this->router->collection->middleware['class_middleware'][$ctrl];
-                $this->callHandler($class);
+                return $this->callHandler($class);
             }
         }
+        return null;
     }
 
     /**
@@ -68,8 +71,9 @@ class Middleware
         if (isset($this->router->collection->middleware['route_middleware']))
             if (isset($this->router->route->getPath()['middleware']) && class_exists($this->router->collection->middleware['route_middleware'][$this->router->route->getPath()['middleware']])) {
                 $class = $this->router->collection->middleware['route_middleware'][$this->router->route->getPath()['middleware']];
-                $this->callHandler($class);
+                return $this->callHandler($class);
             }
+        return null;
     }
 
     /**
@@ -85,8 +89,9 @@ class Middleware
                 if (!is_null($arg->getClass()))
                     $dependencies[] = $this->getClass($arg->getClass()->name);
             $dependencies = array_merge($dependencies, [$this->router->route]);
-            $reflectionMethod->invokeArgs($instance, $dependencies);
+            return $reflectionMethod->invokeArgs($instance, $dependencies);
         }
+        return null;
     }
 
     /**

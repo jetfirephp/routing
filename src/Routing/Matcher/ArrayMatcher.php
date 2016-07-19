@@ -102,7 +102,7 @@ class ArrayMatcher implements MatcherInterface
                     $this->request['route'] = preg_replace_callback('#:([\w]+)#', [$this, 'paramMatch'], '/' . trim(trim($this->request['prefix'], '/') . '/' . trim($route, '/'), '/'));
                     if ($this->routeMatch('#^' . $this->request['route'] . '$#')) {
                         $this->setCallback();
-                        return $this->generateTarget();
+                        if(!is_null($response = $this->generateTarget())) return $response;
                     }
                 }
             }
@@ -126,6 +126,7 @@ class ArrayMatcher implements MatcherInterface
             $route = preg_replace_callback('#{subdomain}#', [$this, 'subdomainMatch'], $route);
             if (preg_match('#^' . $route . '$#', $host, $this->request['called_subdomain'])) {
                 $this->request['called_subdomain'] = array_shift($this->request['called_subdomain']);
+                $this->request['subdomain'] = str_replace('.'.$domain,'',$host);
                 return true;
             }
         }
@@ -138,7 +139,6 @@ class ArrayMatcher implements MatcherInterface
     private function subdomainMatch()
     {
         if (is_array($this->request['params']) && isset($this->request['params']['subdomain'])) {
-            $this->request['params']['subdomain'] = str_replace('(', '(?:', $this->request['params']['subdomain']);
             return '(' . $this->request['params']['subdomain'] . ')';
         }
         return '([^/]+)';
@@ -180,13 +180,18 @@ class ArrayMatcher implements MatcherInterface
      */
     private function generateTarget()
     {
-        if($this->validMethod())
-            foreach($this->resolver as $resolver)
-                if (is_array($target = call_user_func_array([$this,$resolver],[$this->router->route->getCallback()]))) {
+        if($this->validMethod()) {
+            foreach ($this->resolver as $resolver) {
+                if (is_array($target = call_user_func_array([$this, $resolver], [$this->router->route->getCallback()]))) {
                     $this->setTarget($target);
+                    if ($this->router->middleware->globalMiddleware() === false || $this->router->middleware->blockMiddleware() === false || $this->router->middleware->classMiddleware() === false || $this->router->middleware->routeMiddleware() === false)
+                        return null;
                     $this->router->response->setStatusCode(202);
                     return true;
                 }
+            }
+            return false;
+        }
         $this->router->response->setStatusCode(405);
         return false;
     }
@@ -291,10 +296,17 @@ class ArrayMatcher implements MatcherInterface
         if (is_string($callback) && strpos($callback, '@') !== false) {
             $routes = explode('@', $callback);
             if (!isset($routes[1])) $routes[1] = 'index';
+            if ($routes[1] == '{method}'){
+                $this->request['parameters'] = explode('/',str_replace(str_replace('*','',$this->request['route']),'',$this->router->route->getUrl()));
+                $routes[1] = $this->request['parameters'][0];
+                array_shift($this->request['parameters']);
+                if(preg_match('/[A-Z]/', $routes[1])) return false;
+                $routes[1] = lcfirst(str_replace('-','',ucwords($routes[1],'-')));
+            }
             $index = isset($this->request['collection_index']) ? $this->request['collection_index'] : 0;
             $class = (class_exists($routes[0]))
                 ? $routes[0]
-                : $this->router->collection->getRoutes()['ctrl_namespace_'.$index].$routes[0];
+                : $this->router->collection->getRoutes()['ctrl_namespace_' . $index] . $routes[0];
             if (!class_exists($class))
                 throw new \Exception('Class "' . $class . '." is not found');
             if (method_exists($class, $routes[1])) {
@@ -305,7 +317,8 @@ class ArrayMatcher implements MatcherInterface
                     'action' => $routes[1]
                 ];
             }
-            throw new \Exception('The required method "' . $routes[1] . '" is not found in "' . $class . '"');
+            if(!isset($this->request['params']['group']))
+                throw new \Exception('The required method "' . $routes[1] . '" is not found in "' . $class . '"');
         }
         return false;
     }
@@ -317,7 +330,7 @@ class ArrayMatcher implements MatcherInterface
      */
     public function isTemplate($callback)
     {
-        if(is_string($callback)) {
+        if(is_string($callback) && strpos($callback, '@') === false) {
             $path = trim($callback, '/');
             $extension = substr(strrchr($path, "."), 1);
             $index = isset($this->request['collection_index']) ? $this->request['collection_index'] : 0;
