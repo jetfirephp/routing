@@ -317,7 +317,7 @@ class ArrayMatcher implements MatcherInterface
                     'action' => $routes[1]
                 ];
             }
-            if(!isset($this->request['params']['group']))
+            if (!strpos($callback, '{method}') !== false)
                 throw new \Exception('The required method "' . $routes[1] . '" is not found in "' . $class . '"');
         }
         return false;
