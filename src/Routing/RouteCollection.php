@@ -26,6 +26,10 @@ class RouteCollection
      * @var
      */
     public $middleware;
+    /**
+     * @var
+     */
+    public $matcher;
 
     /**
      * @param array $routes
@@ -126,7 +130,7 @@ class RouteCollection
      */
     public function generateRoutesPath()
     {
-        $root = ($protocol = (isset($_SERVER['REQUEST_SCHEME'])?$_SERVER['REQUEST_SCHEME']:'http')) . '://' . ($domain = (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'])) . str_replace('/index.php', '', $_SERVER['SCRIPT_NAME']);
+        $root = ($protocol = (isset($_SERVER['REQUEST_SCHEME'])?$_SERVER['REQUEST_SCHEME']:'http')) . '://' . ($domain = $_SERVER['SERVER_NAME']) . (!empty($_SERVER['SERVER_PORT']) ? ':'.$_SERVER['SERVER_PORT'] : '' ) . str_replace('/index.php', '', $_SERVER['SCRIPT_NAME']);
         if (strpos($domain, ($new_domain = $this->getDomain($root))) !== false)
             $root = str_replace($domain, $new_domain, $root);
         $count = 0;

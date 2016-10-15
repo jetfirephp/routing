@@ -41,9 +41,15 @@ class Middleware
     public function blockMiddleware()
     {
         if (isset($this->router->collection->middleware['block_middleware']))
-            if (isset($this->router->collection->middleware['block_middleware'][$this->router->route->getTarget('block')]) && class_exists($this->router->collection->middleware['block_middleware'][$this->router->route->getTarget('block')])) {
-                $class = $this->router->collection->middleware['block_middleware'][$this->router->route->getTarget('block')];
-                return $this->callHandler($class);
+            if (isset($this->router->collection->middleware['block_middleware'][$this->router->route->getTarget('block')])) {
+                $blocks = $this->router->collection->middleware['block_middleware'][$this->router->route->getTarget('block')];
+                if (is_array($blocks)) {
+                    foreach ($blocks as $block)
+                        if (class_exists($block))
+                            if($this->callHandler($block) == false) return false;
+                }
+                elseif (is_string($blocks) && class_exists($blocks))
+                    return $this->callHandler($blocks);
             }
         return null;
     }
@@ -56,8 +62,12 @@ class Middleware
         if (isset($this->router->collection->middleware['class_middleware'])) {
             $ctrl = str_replace('\\', '/', $this->router->route->getTarget('controller'));
             if (isset($this->router->collection->middleware['class_middleware'][$ctrl]) && class_exists($this->router->route->getTarget('controller'))) {
-                $class = $this->router->collection->middleware['class_middleware'][$ctrl];
-                return $this->callHandler($class);
+                $classes = $this->router->collection->middleware['class_middleware'][$ctrl];
+                if(is_array($classes)){
+                    foreach ($classes as $class)
+                        if($this->callHandler($class) == false)return false;
+                }elseif(is_string($classes))
+                    return $this->callHandler($classes);
             }
         }
         return null;
@@ -70,8 +80,12 @@ class Middleware
     {
         if (isset($this->router->collection->middleware['route_middleware']))
             if (isset($this->router->route->getPath()['middleware']) && class_exists($this->router->collection->middleware['route_middleware'][$this->router->route->getPath()['middleware']])) {
-                $class = $this->router->collection->middleware['route_middleware'][$this->router->route->getPath()['middleware']];
-                return $this->callHandler($class);
+                $classes = $this->router->collection->middleware['route_middleware'][$this->router->route->getPath()['middleware']];
+                if(is_array($classes)){
+                    foreach ($classes as $class)
+                        if($this->callHandler($class) == false)return false;
+                }elseif(is_string($classes))
+                    return $this->callHandler($classes);
             }
         return null;
     }

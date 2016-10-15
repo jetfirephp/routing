@@ -115,7 +115,8 @@ class ArrayMatcher implements MatcherInterface
      * @return bool
      */
     private function checkSubdomain($route){
-        $url = (isset($_SERVER['REQUEST_SCHEME']) ? $_SERVER['REQUEST_SCHEME'] : 'http') . '://' . ($host = (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME']));
+        $url = (isset($_SERVER['REQUEST_SCHEME']) ? $_SERVER['REQUEST_SCHEME'] : 'http') . '://' . ($host = (isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : $_SERVER['HTTP_HOST']));
+        $host = explode(':',$host)[0];
         $domain = $this->router->collection->getDomain($url);
         if(!empty($this->request['subdomain']) && $route[0] == '/') $route = trim($this->request['subdomain'],'.').'.'.$domain.$route;
         if($route[0] == '/'){
@@ -301,7 +302,7 @@ class ArrayMatcher implements MatcherInterface
                 $routes[1] = $this->request['parameters'][0];
                 array_shift($this->request['parameters']);
                 if(preg_match('/[A-Z]/', $routes[1])) return false;
-                $routes[1] = lcfirst(str_replace('-','',ucwords($routes[1],'-')));
+                $routes[1] = lcfirst(str_replace(' ','',ucwords(str_replace('-',' ',$routes[1]))));
             }
             $index = isset($this->request['collection_index']) ? $this->request['collection_index'] : 0;
             $class = (class_exists($routes[0]))
