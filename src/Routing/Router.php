@@ -100,9 +100,7 @@ class Router
     {
         $this->setUrl();
         if ($this->config['generateRoutesPath']) $this->collection->generateRoutesPath();
-        if ($this->match()) {
-            $this->callTarget();
-        }
+        if ($this->match()) $this->callTarget();
         $this->callResponse();
     }
 
@@ -122,8 +120,7 @@ class Router
     public function match()
     {
         foreach ($this->matcher as $key => $matcher) {
-            if (call_user_func([$this->matcher[$key], 'match']))
-                return true;
+            if (call_user_func([$this->matcher[$key], 'match'])) return true;
         }
         return false;
     }
@@ -141,7 +138,7 @@ class Router
             }
         }
     }
-    
+
     /**
      * @param array $responses
      */

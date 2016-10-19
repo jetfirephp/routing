@@ -46,7 +46,7 @@ class Middleware
                 if (is_array($blocks)) {
                     foreach ($blocks as $block)
                         if (class_exists($block))
-                            if($this->callHandler($block) == false) return false;
+                            if($this->callHandler($block) === false) return false;
                 }
                 elseif (is_string($blocks) && class_exists($blocks))
                     return $this->callHandler($blocks);
@@ -65,7 +65,7 @@ class Middleware
                 $classes = $this->router->collection->middleware['class_middleware'][$ctrl];
                 if(is_array($classes)){
                     foreach ($classes as $class)
-                        if($this->callHandler($class) == false)return false;
+                        if($this->callHandler($class) === false)return false;
                 }elseif(is_string($classes))
                     return $this->callHandler($classes);
             }
@@ -83,7 +83,7 @@ class Middleware
                 $classes = $this->router->collection->middleware['route_middleware'][$this->router->route->getPath()['middleware']];
                 if(is_array($classes)){
                     foreach ($classes as $class)
-                        if($this->callHandler($class) == false)return false;
+                        if($this->callHandler($class) === false)return false;
                 }elseif(is_string($classes))
                     return $this->callHandler($classes);
             }
