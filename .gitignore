@@ -2,4 +2,6 @@
 /Block1
 Autoload.php
 .htaccess
+/.git
+/.idea
 index.php
