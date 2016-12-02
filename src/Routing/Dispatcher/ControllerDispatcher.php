@@ -35,7 +35,6 @@ class ControllerDispatcher implements DispatcherInterface
 
 
     /**
-     * @return mixed
      * @throws \Exception
      */
     public function call()
@@ -52,8 +51,13 @@ class ControllerDispatcher implements DispatcherInterface
             $dependencies = array_merge($dependencies, ($this->route->getParameters() == '') ? [] : $this->route->getParameters());
             if ($this->response->getStatusCode() == 202)
                 $this->response->setStatusCode(200);
-            if (is_array($content = $reflectionMethod->invokeArgs($this->getController(), $dependencies))) $this->route->addTarget('data', $content);
-            elseif (!is_null($content)) $this->response->setContent($content);
+            if (is_array($content = $reflectionMethod->invokeArgs($this->getController(), $dependencies))){
+                $this->route->addTarget('data', $content);
+                if(isset($this->route->getParams()['ajax']) && $this->route->getParams()['ajax'] == true){
+                    $this->response->setContent(json_encode($content));
+                    $this->response->setHeaders(['Content-Type' => 'application/json']);
+                }
+            } elseif (!is_null($content)) $this->response->setContent($content);
         }else
             $this->response->setStatusCode(404);
     }

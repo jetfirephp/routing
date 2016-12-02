@@ -36,7 +36,7 @@ class TemplateDispatcher implements DispatcherInterface
     /**
      * @param Route $route
      */
-    public function __construct(Route $route,ResponseInterface $response)
+    public function __construct(Route $route, ResponseInterface $response)
     {
         $this->route = $route;
         $this->response = $response;
@@ -53,8 +53,8 @@ class TemplateDispatcher implements DispatcherInterface
             $this->response->setContent(call_user_func_array($this->route->getTarget('callback')[$this->route->getTarget('extension')], [$this->route]));
         else {
             ob_start();
-            if(isset($this->route->getTarget()['data']))extract($this->route->getTarget('data'));
-            if(isset($this->route->getParams()['data']))extract($this->route->getParams()['data']);
+            if (isset($this->route->getTarget()['data'])) extract($this->route->getTarget('data'));
+            if (isset($this->route->getParams()['data'])) extract($this->route->getParams()['data']);
             require($this->route->getTarget('template'));
             $this->response->setContent(ob_get_clean());
         }
@@ -63,7 +63,8 @@ class TemplateDispatcher implements DispatcherInterface
     /**
      * @param $extension
      */
-    public function setContentType($extension){
+    public function setContentType($extension)
+    {
         $this->response->setStatusCode(200);
         isset($this->types[$extension])
             ? $this->response->setHeaders(['Content-Type' => $this->types[$extension]])

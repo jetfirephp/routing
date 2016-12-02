@@ -1,6 +1,7 @@
 <?php
 
 namespace JetFire\Routing;
+
 use JetFire\Routing\Matcher\ArrayMatcher;
 
 /**
@@ -38,9 +39,9 @@ class Router
      * @var array
      */
     private $config = [
-        'templateExtension'      => ['.html', '.php', '.json', '.xml'],
-        'templateCallback'       => [],
-        'di'                 => '',
+        'templateExtension' => ['.html', '.php', '.json', '.xml'],
+        'templateCallback' => [],
+        'di' => '',
         'generateRoutesPath' => false,
     ];
 
@@ -49,14 +50,14 @@ class Router
      * @param ResponseInterface $response
      * @param Route $route
      */
-    public function __construct(RouteCollection $collection,ResponseInterface $response = null,Route $route = null)
+    public function __construct(RouteCollection $collection, ResponseInterface $response = null, Route $route = null)
     {
         $this->collection = $collection;
-        $this->response = is_null($response)? new Response() : $response;
+        $this->response = is_null($response) ? new Response() : $response;
         $this->response->setStatusCode(404);
-        $this->route = is_null($route)? new Route() : $route;
+        $this->route = is_null($route) ? new Route() : $route;
         $this->middleware = new Middleware($this);
-        $this->config['di'] = function($class){
+        $this->config['di'] = function ($class) {
             return new $class;
         };
     }
@@ -80,8 +81,9 @@ class Router
     /**
      * @param object|array $matcher
      */
-    public function setMatcher($matcher){
-        if(is_object($matcher))
+    public function setMatcher($matcher)
+    {
+        if (is_object($matcher))
             $matcher = [$matcher];
         $this->matcher = $matcher;
     }
@@ -89,7 +91,8 @@ class Router
     /**
      * @param string $matcher
      */
-    public function addMatcher($matcher){
+    public function addMatcher($matcher)
+    {
         $this->matcher[] = $matcher;
     }
 
@@ -130,9 +133,9 @@ class Router
      */
     public function callTarget()
     {
-        $target = is_array($this->route->getTarget('dispatcher'))?$this->route->getTarget('dispatcher'):[$this->route->getTarget('dispatcher')];
-        if(!empty($target)) {
-            foreach($target as $call) {
+        $target = is_array($this->route->getTarget('dispatcher')) ? $this->route->getTarget('dispatcher') : [$this->route->getTarget('dispatcher')];
+        if (!empty($target)) {
+            foreach ($target as $call) {
                 $this->dispatcher = new $call($this->route, $this->response);
                 call_user_func([$this->dispatcher, 'call']);
             }
@@ -155,11 +158,11 @@ class Router
         if (isset($this->route->getDetail()['response_templates']) && isset($this->route->getDetail()['response_templates'][$code = $this->response->getStatusCode()])) {
             $this->route->setCallback($this->route->getDetail()['response_templates'][$code]);
             $matcher = null;
-            foreach($this->matcher as $instance) if($instance instanceof ArrayMatcher) $matcher = $instance;
-            if(is_null($matcher))$matcher = new ArrayMatcher($this);
+            foreach ($this->matcher as $instance) if ($instance instanceof ArrayMatcher) $matcher = $instance;
+            if (is_null($matcher)) $matcher = new ArrayMatcher($this);
             foreach (call_user_func([$matcher, 'getResolver']) as $match)
-                if (is_array($target = call_user_func_array([$matcher, $match], [$this->route->getCallback()]))){
-                    call_user_func_array([$matcher, 'setTarget'],[$target]);
+                if (is_array($target = call_user_func_array([$matcher, $match], [$this->route->getCallback()]))) {
+                    call_user_func_array([$matcher, 'setTarget'], [$target]);
                     $this->callTarget();
                     break;
                 }

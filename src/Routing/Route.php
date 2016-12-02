@@ -153,7 +153,6 @@ class Route
 
     /**
      * @param $target
-     * @return mixed
      */
     public function setTarget($target = [])
     {
