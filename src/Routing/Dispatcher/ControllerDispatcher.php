@@ -53,7 +53,7 @@ class ControllerDispatcher implements DispatcherInterface
                 $this->response->setStatusCode(200);
             if (is_array($content = $reflectionMethod->invokeArgs($this->getController(), $dependencies))){
                 $this->route->addTarget('data', $content);
-                if(isset($this->route->getParams()['ajax']) && $this->route->getParams()['ajax'] == true){
+                if(isset($this->route->getParams()['ajax']) && $this->route->getParams()['ajax'] === true){
                     $this->response->setContent(json_encode($content));
                     $this->response->setHeaders(['Content-Type' => 'application/json']);
                 }
