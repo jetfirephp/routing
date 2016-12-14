@@ -26,8 +26,9 @@ class ControllerDispatcher implements DispatcherInterface
 
     /**
      * @param Route $route
+     * @param ResponseInterface $response
      */
-    public function __construct(Route $route,ResponseInterface $response)
+    public function __construct(Route $route, ResponseInterface $response)
     {
         $this->route = $route;
         $this->response = $response;
@@ -47,18 +48,18 @@ class ControllerDispatcher implements DispatcherInterface
                 ? $count++
                 : $dependencies[] = call_user_func_array($this->route->getTarget('di'), [$arg->getClass()->name]);
         }
-        if($count == count($this->route->getParameters()) || ($this->route->getParameters() == '' && $count == 0)) {
+        if ($count == count($this->route->getParameters()) || ($this->route->getParameters() == '' && $count == 0)) {
             $dependencies = array_merge($dependencies, ($this->route->getParameters() == '') ? [] : $this->route->getParameters());
             if ($this->response->getStatusCode() == 202)
                 $this->response->setStatusCode(200);
-            if (is_array($content = $reflectionMethod->invokeArgs($this->getController(), $dependencies))){
+            if (is_array($content = $reflectionMethod->invokeArgs($this->getController(), $dependencies))) {
                 $this->route->addTarget('data', $content);
-                if(isset($this->route->getParams()['ajax']) && $this->route->getParams()['ajax'] === true){
+                if (isset($this->route->getParams()['ajax']) && $this->route->getParams()['ajax'] === true) {
                     $this->response->setContent(json_encode($content));
                     $this->response->setHeaders(['Content-Type' => 'application/json']);
                 }
             } elseif (!is_null($content)) $this->response->setContent($content);
-        }else
+        } else
             $this->response->setStatusCode(404);
     }
 
@@ -75,13 +76,13 @@ class ControllerDispatcher implements DispatcherInterface
         $constructor = $reflector->getConstructor();
         if (is_null($constructor)) {
             $class = $this->route->getTarget('controller');
-            return call_user_func_array($this->route->getTarget('di'),[$class]);
+            return call_user_func_array($this->route->getTarget('di'), [$class]);
         }
         $dependencies = $constructor->getParameters();
         $arguments = [];
         foreach ($dependencies as $dep) {
             $class = $dep->getClass()->name;
-            array_push($arguments, call_user_func_array($this->route->getTarget('di'),[$class]));
+            array_push($arguments, call_user_func_array($this->route->getTarget('di'), [$class]));
         }
         return $reflector->newInstanceArgs($arguments);
     }

@@ -14,8 +14,9 @@ interface DispatcherInterface {
 
     /**
      * @param Route $route
+     * @param ResponseInterface $response
      */
-    public function __construct(Route $route,ResponseInterface $response);
+    public function __construct(Route $route, ResponseInterface $response);
 
     /**
      * @return mixed

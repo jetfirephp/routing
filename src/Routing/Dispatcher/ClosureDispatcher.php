@@ -24,8 +24,9 @@ class ClosureDispatcher implements DispatcherInterface
 
     /**
      * @param Route $route
+     * @param ResponseInterface $response
      */
-    public function __construct(Route $route,ResponseInterface $response)
+    public function __construct(Route $route, ResponseInterface $response)
     {
         $this->route = $route;
         $this->response = $response;
@@ -42,8 +43,8 @@ class ClosureDispatcher implements DispatcherInterface
             $this->response->setHeaders(['Content-Type' => 'text/html']);
         }
         $params = ($this->route->getParameters() == '') ? [] : $this->route->getParameters();
-        if(is_array($content = call_user_func_array($this->route->getTarget('closure'), $params))) $this->route->addTarget('data',$content);
-        elseif(!is_null($content)) $this->response->setContent($content);
+        if (is_array($content = call_user_func_array($this->route->getTarget('closure'), $params))) $this->route->addTarget('data', $content);
+        elseif (!is_null($content)) $this->response->setContent($content);
     }
 
 }
