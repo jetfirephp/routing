@@ -2,7 +2,6 @@
 
 namespace JetFire\Routing;
 
-
 /**
  * Class RouteCollection
  * @package JetFire\Routing
@@ -126,18 +125,24 @@ class RouteCollection
     }
 
     /**
+     * @param string $root
+     * @param string $script_file
      * @return bool
      */
-    public function generateRoutesPath()
+    public function generateRoutesPath($root = null, $script_file = 'index.php')
     {
-        $root = ($protocol = (isset($_SERVER['REQUEST_SCHEME'])?$_SERVER['REQUEST_SCHEME']:'http')) . '://' . ($domain = $_SERVER['SERVER_NAME']) . (!empty($_SERVER['SERVER_PORT']) ? ':'.$_SERVER['SERVER_PORT'] : '' ) . str_replace('/index.php', '', $_SERVER['SCRIPT_NAME']);
+        $protocol = (isset($_SERVER['REQUEST_SCHEME']) ? $_SERVER['REQUEST_SCHEME'] : 'http');
+        $domain = $_SERVER['SERVER_NAME'];
+        $root = (is_null($root))
+            ? $protocol . '://' . $domain . ((!empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] != 80 && $_SERVER['SERVER_PORT'] != 8080) ? ':' . $_SERVER['SERVER_PORT'] : '') . str_replace('/' . $script_file, '', $_SERVER['SCRIPT_NAME'])
+            : $root;
         if (strpos($domain, ($new_domain = $this->getDomain($root))) !== false)
             $root = str_replace($domain, $new_domain, $root);
         $count = 0;
         for ($i = 0; $i < $this->countRoutes; ++$i) {
             $prefix = (isset($this->routes['prefix_' . $i])) ? $this->routes['prefix_' . $i] : '';
             $subdomain = (isset($this->routes['subdomain_' . $i])) ? $this->routes['subdomain_' . $i] : '';
-            $url = (!empty($subdomain)) ? str_replace($protocol.'://',$protocol.'://'.$subdomain.'.' ,$root) : $root;
+            $url = (!empty($subdomain)) ? str_replace($protocol . '://', $protocol . '://' . $subdomain . '.', $root) : $root;
             if (isset($this->routes['routes_' . $i]))
                 foreach ($this->routes['routes_' . $i] as $route => $dependencies) {
                     if (is_array($dependencies) && isset($dependencies['use']))
