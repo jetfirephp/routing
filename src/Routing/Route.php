@@ -42,10 +42,11 @@ class Route
      */
     public function __construct()
     {
+        $request_method = (isset($_SERVER['REQUEST_METHOD'])) ? $_SERVER['REQUEST_METHOD'] : 'GET';
         $this->method = (
             isset($_POST['_METHOD'])
             && in_array($_POST['_METHOD'], array('PUT', 'DELETE'))
-        ) ? $_POST['_METHOD'] : $_SERVER['REQUEST_METHOD'];
+        ) ? $_POST['_METHOD'] : $request_method;
     }
 
     /**
