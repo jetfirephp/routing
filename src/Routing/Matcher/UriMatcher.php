@@ -76,7 +76,6 @@ class UriMatcher implements MatcherInterface
     /**
      * @param $method
      * @param $class
-     * @return mixed|void
      */
     public function addDispatcher($method,$class){
         $this->dispatcher[$method] = $class;

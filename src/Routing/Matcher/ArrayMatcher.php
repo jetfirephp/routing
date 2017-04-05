@@ -78,7 +78,6 @@ class ArrayMatcher implements MatcherInterface
     /**
      * @param $method
      * @param $class
-     * @return mixed|void
      * @internal param array $dispatcher
      */
     public function addDispatcher($method,$class){
