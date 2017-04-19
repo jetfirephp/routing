@@ -132,12 +132,13 @@ class RouteCollection
      */
     public function generateRoutesPath($root = null, $script_file = 'index.php')
     {
-        $protocol = (isset($_SERVER['REQUEST_SCHEME']) ? $_SERVER['REQUEST_SCHEME'] : 'http');
-        $domain = $_SERVER['SERVER_NAME'];
+        $protocol = isset($_SERVER['REQUEST_SCHEME']) ? $_SERVER['REQUEST_SCHEME'] : 'http';
+        $domain = isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : null;
         $root = (is_null($root))
             ? $protocol . '://' . $domain . ((!empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] != 80) ? ':' . $_SERVER['SERVER_PORT'] : '') . str_replace('/' . $script_file, '', $_SERVER['SCRIPT_NAME'])
             : $root;
-        if (strpos($domain, ($new_domain = $this->getDomain($root))) !== false)
+        $new_domain = $this->getDomain($root);
+        if (!is_null($domain) && strpos($domain, $new_domain) !== false)
             $root = str_replace($domain, $new_domain, $root);
         $count = 0;
         for ($i = 0; $i < $this->countRoutes; ++$i) {
