@@ -3,6 +3,8 @@
 namespace JetFire\Routing;
 
 use JetFire\Routing\Matcher\ArrayMatcher;
+use ReflectionClass;
+use ReflectionMethod;
 
 /**
  * Class Router
@@ -168,6 +170,73 @@ class Router
                 }
             $this->response->setStatusCode($code);
         }
+        if (isset($this->collection->middleware['before_render'])){
+            foreach ($this->collection->middleware['before_render'] as $callback){
+                $call = explode('@', $callback);
+                if(isset($call[1])){
+                    $classes = ['JetFire\Routing\Router' => $this];
+                    $args = ['router' => $this, 'route' => $this->route, 'response' => $this->response];
+                    $this->callMethod($call[0], $call[1], $args, $args, $classes);
+                }
+            }
+        }
+
         $this->response->send();
     }
+
+    /**
+     * @param $controller
+     * @param $method
+     * @param array $methodArgs
+     * @param array $ctrlArgs
+     * @param array $classInstance
+     * @return mixed|null
+     */
+    public function callMethod($controller, $method, $methodArgs = [], $ctrlArgs = [], $classInstance = [])
+    {
+        if (class_exists($controller) && method_exists($controller, $method)) {
+            $reflectionMethod = new ReflectionMethod($controller, $method);
+            $dependencies = [];
+            foreach ($reflectionMethod->getParameters() as $arg) {
+                if (isset($methodArgs[$arg->name]))
+                    array_push($dependencies, $methodArgs[$arg->name]);
+                else if (!is_null($arg->getClass())) {
+                    array_push($dependencies, call_user_func_array($this->route->getTarget('di'), [$arg->getClass()->name]));
+                }
+            }
+            $dependencies = array_merge($dependencies, $methodArgs);
+            return $reflectionMethod->invokeArgs($this->callClass($controller, $ctrlArgs, $classInstance), $dependencies);
+        }
+        return null;
+    }
+
+    /**
+     * @param $controller
+     * @param array $ctrlArgs
+     * @param array $classInstance
+     * @return object
+     * @throws \Exception
+     */
+    public function callClass($controller, $ctrlArgs = [], $classInstance = [])
+    {
+        $reflector = new ReflectionClass($controller);
+        if (!$reflector->isInstantiable())
+            throw new \Exception('Controller [' . $controller . '] is not instantiable.');
+        $constructor = $reflector->getConstructor();
+        if (is_null($constructor))
+            return call_user_func_array($this->route->getTarget('di'), [$controller]);
+        $dependencies = [];
+        foreach ($constructor->getParameters() as $arg) {
+            if (isset($ctrlArgs[$arg->name]))
+                array_push($dependencies, $ctrlArgs[$arg->name]);
+            else if (isset($classInstance[$arg->getClass()->name]))
+                array_push($dependencies, $classInstance[$arg->getClass()->name]);
+            else if (!is_null($arg->getClass())) {
+                array_push($dependencies, call_user_func_array($this->route->getTarget('di'), [$arg->getClass()->name]));
+            }
+        }
+        $dependencies = array_merge($dependencies, $ctrlArgs);
+        return $reflector->newInstanceArgs($dependencies);
+    }
+
 }
