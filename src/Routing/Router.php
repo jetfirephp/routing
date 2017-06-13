@@ -201,7 +201,7 @@ class Router
                 if (isset($methodArgs[$arg->name]))
                     array_push($dependencies, $methodArgs[$arg->name]);
                 else if (!is_null($arg->getClass())) {
-                    array_push($dependencies, call_user_func_array($this->route->getTarget('di'), [$arg->getClass()->name]));
+                    array_push($dependencies, call_user_func_array($this->getConfig()['di'], [$arg->getClass()->name]));
                 }
             }
             $dependencies = array_merge($dependencies, $methodArgs);
@@ -224,7 +224,7 @@ class Router
             throw new \Exception('Controller [' . $controller . '] is not instantiable.');
         $constructor = $reflector->getConstructor();
         if (is_null($constructor))
-            return call_user_func_array($this->route->getTarget('di'), [$controller]);
+            return call_user_func_array($this->getConfig()['di'], [$controller]);
         $dependencies = [];
         foreach ($constructor->getParameters() as $arg) {
             if (isset($ctrlArgs[$arg->name]))
@@ -232,7 +232,7 @@ class Router
             else if (isset($classInstance[$arg->getClass()->name]))
                 array_push($dependencies, $classInstance[$arg->getClass()->name]);
             else if (!is_null($arg->getClass())) {
-                array_push($dependencies, call_user_func_array($this->route->getTarget('di'), [$arg->getClass()->name]));
+                array_push($dependencies, call_user_func_array($this->getConfig()['di'], [$arg->getClass()->name]));
             }
         }
         $dependencies = array_merge($dependencies, $ctrlArgs);
