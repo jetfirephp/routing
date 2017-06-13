@@ -49,7 +49,7 @@ class ControllerDispatcher implements DispatcherInterface
                 : $dependencies[] = call_user_func_array($this->route->getTarget('di'), [$arg->getClass()->name]);
         }
 
-        if ($count == count($this->route->getParameters()) || (empty($this->route->getParameters()) && $count == 0)) {
+        if ($count == count($this->route->getParameters()) || ($this->route->getParameters() == '' && $count == 0)) {
             $dependencies = array_merge($dependencies, ($this->route->getParameters() == '') ? [] : $this->route->getParameters());
             if ($this->response->getStatusCode() == 202)
                 $this->response->setStatusCode(200);
