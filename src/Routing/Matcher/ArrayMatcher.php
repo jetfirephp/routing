@@ -220,7 +220,7 @@ class ArrayMatcher implements MatcherInterface
      */
     private function checkRequest($key)
     {
-        if (strpos($this->request[$key], ':') !== false) {
+        if (strpos($this->request[$key], ':') !== false && isset($this->request['parameters'][0])) {
             $this->request['@' . $key] = $this->request[$key];
             $this->request[$key] = $this->request['parameters'][0];
             unset($this->request['parameters'][0]);
