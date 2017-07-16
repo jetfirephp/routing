@@ -99,7 +99,7 @@ class Middleware implements MiddlewareInterface
      */
     public function globalMiddleware($action)
     {
-        if (isset($this->middleware[$action][$action]['global_middleware'])) {
+        if (isset($this->middleware[$action]['global_middleware'])) {
             foreach ($this->middleware[$action]['global_middleware'] as $class) {
                 if (class_exists($class)) return $this->callHandler($class);
             }
@@ -182,9 +182,11 @@ class Middleware implements MiddlewareInterface
      */
     private function callHandler($class)
     {
-        $instance = call_user_func($this->router->getConfig()['di'], $class);
-        if (method_exists($instance, 'handle')) {
-            $reflectionMethod = new ReflectionMethod($instance, 'handle');
+        $class = explode('@', $class);
+        $method = isset($class[1]) ? $class[1] : 'handle';
+        $instance = call_user_func($this->router->getConfig()['di'], $class[0]);
+        if (method_exists($instance, $method)) {
+            $reflectionMethod = new ReflectionMethod($instance, $method);
             $dependencies = [];
             foreach ($reflectionMethod->getParameters() as $arg) {
                 if (!is_null($arg->getClass())) {

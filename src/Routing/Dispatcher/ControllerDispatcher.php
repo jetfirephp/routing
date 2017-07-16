@@ -70,6 +70,15 @@ class ControllerDispatcher implements DispatcherInterface
                 }
                 $this->router->response->setContent($content);
             }
+            /*if (is_array($content)) {
+                $this->router->route->addTarget('data', $content);
+                if (isset($this->router->route->getParams()['ajax']) && $this->router->route->getParams()['ajax'] === true) {
+                    $this->router->response->setContent(json_encode($content));
+                    $this->router->response->setHeaders(['Content-Type' => 'application/json']);
+                }
+            } elseif (!is_null($content)) {
+                $this->router->response->setContent($content);
+            }*/
         } else {
             $this->router->response->setStatusCode(404);
         }
