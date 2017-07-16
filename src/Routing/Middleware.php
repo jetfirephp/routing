@@ -100,8 +100,9 @@ class Middleware implements MiddlewareInterface
     public function globalMiddleware($action)
     {
         if (isset($this->middleware[$action]['global_middleware'])) {
-            foreach ($this->middleware[$action]['global_middleware'] as $class) {
-                if (class_exists($class)) return $this->callHandler($class);
+            foreach ($this->middleware[$action]['global_middleware'] as $callback) {
+                $response = $this->callHandler($callback);
+                if ($response instanceof ResponseInterface) return $response;
             }
         }
         return true;
@@ -119,11 +120,10 @@ class Middleware implements MiddlewareInterface
                 $blocks = $this->middleware[$action]['block_middleware'][$this->router->route->getTarget('block')];
                 if (is_array($blocks)) {
                     foreach ($blocks as $block) {
-                        if (class_exists($block)) {
-                            if ($this->callHandler($block) === false) return false;
-                        }
+                        $response = $this->callHandler($block);
+                        if ($response instanceof ResponseInterface) return $response;
                     }
-                } elseif (is_string($blocks) && class_exists($blocks)) {
+                } elseif (is_string($blocks)) {
                     return $this->callHandler($blocks);
                 }
             }
@@ -144,7 +144,8 @@ class Middleware implements MiddlewareInterface
                 $classes = $this->middleware[$action]['class_middleware'][$ctrl];
                 if (is_array($classes)) {
                     foreach ($classes as $class) {
-                        if ($this->callHandler($class) === false) return false;
+                        $response = $this->callHandler($class);
+                        if ($response instanceof ResponseInterface) return $response;
                     }
                 } elseif (is_string($classes)) {
                     return $this->callHandler($classes);
@@ -166,7 +167,8 @@ class Middleware implements MiddlewareInterface
                 $classes = $this->middleware[$action]['route_middleware'][$this->router->route->getPath()['middleware']];
                 if (is_array($classes)) {
                     foreach ($classes as $class) {
-                        if ($this->callHandler($class) === false) return false;
+                        $response = $this->callHandler($class);
+                        if ($response instanceof ResponseInterface) return $response;
                     }
                 } elseif (is_string($classes)) {
                     return $this->callHandler($classes);
@@ -177,24 +179,26 @@ class Middleware implements MiddlewareInterface
     }
 
     /**
-     * @param $class
+     * @param $callback
      * @return mixed
      */
-    private function callHandler($class)
+    private function callHandler($callback)
     {
-        $class = explode('@', $class);
-        $method = isset($class[1]) ? $class[1] : 'handle';
-        $instance = call_user_func($this->router->getConfig()['di'], $class[0]);
-        if (method_exists($instance, $method)) {
-            $reflectionMethod = new ReflectionMethod($instance, $method);
-            $dependencies = [];
-            foreach ($reflectionMethod->getParameters() as $arg) {
-                if (!is_null($arg->getClass())) {
-                    $dependencies[] = $this->getClass($arg->getClass()->name);
+        $callback = explode('@', $callback);
+        $method = isset($callback[1]) ? $callback[1] : 'handle';
+        if(class_exists($callback[0])) {
+            $instance = call_user_func($this->router->getConfig()['di'], $callback[0]);
+            if (method_exists($instance, $method)) {
+                $reflectionMethod = new ReflectionMethod($instance, $method);
+                $dependencies = [];
+                foreach ($reflectionMethod->getParameters() as $arg) {
+                    if (!is_null($arg->getClass())) {
+                        $dependencies[] = $this->getClass($arg->getClass()->name);
+                    }
                 }
+                $dependencies = array_merge($dependencies, [$this->router->route]);
+                return $reflectionMethod->invokeArgs($instance, $dependencies);
             }
-            $dependencies = array_merge($dependencies, [$this->router->route]);
-            return $reflectionMethod->invokeArgs($instance, $dependencies);
         }
         return true;
     }
@@ -212,7 +216,7 @@ class Middleware implements MiddlewareInterface
                 return $this->router;
             case RouteCollection::class:
                 return $this->router->collection;
-            case Response::class:
+            case ResponseInterface::class:
                 return $this->router->response;
             default:
                 return call_user_func_array($this->router->getConfig()['di'], [$class]);
