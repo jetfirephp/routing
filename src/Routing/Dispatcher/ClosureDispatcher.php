@@ -2,9 +2,11 @@
 
 namespace JetFire\Routing\Dispatcher;
 
-
+use JetFire\Routing\Response;
 use JetFire\Routing\ResponseInterface;
 use JetFire\Routing\Route;
+use JetFire\Routing\RouteCollection;
+use JetFire\Routing\Router;
 
 /**
  * Class ClosureDispatcher
@@ -13,23 +15,16 @@ use JetFire\Routing\Route;
 class ClosureDispatcher implements DispatcherInterface
 {
     /**
-     * @var Route
+     * @var Router
      */
-    private $route;
+    private $router;
 
     /**
-     * @var ResponseInterface
+     * @param Router $router
      */
-    private $response;
-
-    /**
-     * @param Route $route
-     * @param ResponseInterface $response
-     */
-    public function __construct(Route $route, ResponseInterface $response)
+    public function __construct(Router $router)
     {
-        $this->route = $route;
-        $this->response = $response;
+        $this->router = $router;
     }
 
 
@@ -38,13 +33,23 @@ class ClosureDispatcher implements DispatcherInterface
      */
     public function call()
     {
-        if ($this->response->getStatusCode() == 202) {
-            $this->response->setStatusCode(200);
-            $this->response->setHeaders(['Content-Type' => 'text/html']);
+        $classInstance = [
+            Response::class => $this->router->response,
+            Route::class => $this->router->route,
+            RouteCollection::class => $this->router->collection,
+        ];
+
+        $params = empty($this->router->route->getParameters()) ? $classInstance : array_merge($this->router->route->getParameters(), $classInstance);
+        $content = call_user_func_array($this->router->route->getTarget('closure'), $params);
+        if ($content instanceof ResponseInterface) {
+            $this->router->response = $content;
+        } else {
+            if (is_array($content)) {
+                $this->router->route->addTarget('data', $content);
+                $content = json_encode($content);
+            }
+            $this->router->response->setContent($content);
         }
-        $params = ($this->route->getParameters() == '') ? [] : $this->route->getParameters();
-        if (is_array($content = call_user_func_array($this->route->getTarget('closure'), $params))) $this->route->addTarget('data', $content);
-        elseif (!is_null($content)) $this->response->setContent($content);
     }
 
 }

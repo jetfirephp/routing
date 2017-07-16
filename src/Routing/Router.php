@@ -26,9 +26,9 @@ class Router
      */
     public $response;
     /**
-     * @var
+     * @var array
      */
-    public $middleware;
+    public $middlewareCollection = [];
     /**
      * @var array
      */
@@ -56,9 +56,7 @@ class Router
     {
         $this->collection = $collection;
         $this->response = is_null($response) ? new Response() : $response;
-        $this->response->setStatusCode(404);
         $this->route = is_null($route) ? new Route() : $route;
-        $this->middleware = new Middleware($this);
         $this->config['di'] = function ($class) {
             return new $class;
         };
@@ -81,13 +79,31 @@ class Router
     }
 
     /**
+     * @param object|array $middleware
+     */
+    public function setMiddleware($middleware)
+    {
+        $this->middlewareCollection = is_array($middleware)
+            ? $middleware
+            : [$middleware];
+    }
+
+    /**
+     * @param MiddlewareInterface $middleware
+     */
+    public function addMiddleware(MiddlewareInterface $middleware)
+    {
+        $this->middlewareCollection[] = $middleware;
+    }
+
+    /**
      * @param object|array $matcher
      */
     public function setMatcher($matcher)
     {
-        if (is_object($matcher))
-            $matcher = [$matcher];
-        $this->matcher = $matcher;
+        $this->matcher = is_array($matcher)
+            ? $matcher
+            : [$matcher];
     }
 
     /**
@@ -105,8 +121,36 @@ class Router
     {
         $this->setUrl();
         if ($this->config['generateRoutesPath']) $this->collection->generateRoutesPath();
-        if ($this->match()) $this->callTarget();
-        $this->callResponse();
+        if ($this->match() === true) {
+            $this->callMiddleware('before');
+            if (!in_array(substr($this->response->getStatusCode(), 0, 1), [3,4,5])) {
+                $this->callTarget();
+            }
+            $this->callMiddleware('after');
+        }else{
+            $this->response->setStatusCode(404);
+        }
+        return $this->callResponse();
+    }
+
+    /**
+     * @description call the middleware before and after the target
+     * @param $action
+     */
+    private function callMiddleware($action)
+    {
+        foreach ($this->middlewareCollection as $middleware) {
+            if ($middleware instanceof MiddlewareInterface) {
+                foreach ($middleware->getCallbacks() as $callback) {
+                    if (method_exists($middleware, $callback)) {
+                        $response = call_user_func_array([$middleware, $callback], [$action]);
+                        if($response instanceof ResponseInterface) {
+                            $this->response = $response;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -131,14 +175,14 @@ class Router
     }
 
     /**
-     *
+     * @description call the target for the request uri
      */
     public function callTarget()
     {
         $target = is_array($this->route->getTarget('dispatcher')) ? $this->route->getTarget('dispatcher') : [$this->route->getTarget('dispatcher')];
         if (!empty($target)) {
             foreach ($target as $call) {
-                $this->dispatcher = new $call($this->route, $this->response);
+                $this->dispatcher = new $call($this);
                 call_user_func([$this->dispatcher, 'call']);
             }
         }
@@ -160,83 +204,24 @@ class Router
         if (isset($this->route->getDetail()['response_templates']) && isset($this->route->getDetail()['response_templates'][$code = $this->response->getStatusCode()])) {
             $this->route->setCallback($this->route->getDetail()['response_templates'][$code]);
             $matcher = null;
-            foreach ($this->matcher as $instance) if ($instance instanceof ArrayMatcher) $matcher = $instance;
-            if (is_null($matcher)) $matcher = new ArrayMatcher($this);
-            foreach (call_user_func([$matcher, 'getResolver']) as $match)
+            foreach ($this->matcher as $instance) {
+                if ($instance instanceof ArrayMatcher) {
+                    $matcher = $instance;
+                }
+            }
+            if (is_null($matcher)) {
+                $matcher = new ArrayMatcher($this);
+            }
+            foreach (call_user_func([$matcher, 'getResolver']) as $match) {
                 if (is_array($target = call_user_func_array([$matcher, $match], [$this->route->getCallback()]))) {
                     call_user_func_array([$matcher, 'setTarget'], [$target]);
                     $this->callTarget();
                     break;
                 }
+            }
             $this->response->setStatusCode($code);
         }
-        if (isset($this->collection->middleware['before_render'])){
-            foreach ($this->collection->middleware['before_render'] as $callback){
-                $call = explode('@', $callback);
-                if(isset($call[1])){
-                    $classes = ['JetFire\Routing\Router' => $this];
-                    $args = ['router' => $this, 'route' => $this->route, 'response' => $this->response];
-                    $this->callMethod($call[0], $call[1], $args, $args, $classes);
-                }
-            }
-        }
 
-        $this->response->send();
+        return $this->response->send();
     }
-
-    /**
-     * @param $controller
-     * @param $method
-     * @param array $methodArgs
-     * @param array $ctrlArgs
-     * @param array $classInstance
-     * @return mixed|null
-     */
-    public function callMethod($controller, $method, $methodArgs = [], $ctrlArgs = [], $classInstance = [])
-    {
-        if (class_exists($controller) && method_exists($controller, $method)) {
-            $reflectionMethod = new ReflectionMethod($controller, $method);
-            $dependencies = [];
-            foreach ($reflectionMethod->getParameters() as $arg) {
-                if (isset($methodArgs[$arg->name]))
-                    array_push($dependencies, $methodArgs[$arg->name]);
-                else if (!is_null($arg->getClass())) {
-                    array_push($dependencies, call_user_func_array($this->getConfig()['di'], [$arg->getClass()->name]));
-                }
-            }
-            $dependencies = array_merge($dependencies, $methodArgs);
-            return $reflectionMethod->invokeArgs($this->callClass($controller, $ctrlArgs, $classInstance), $dependencies);
-        }
-        return null;
-    }
-
-    /**
-     * @param $controller
-     * @param array $ctrlArgs
-     * @param array $classInstance
-     * @return object
-     * @throws \Exception
-     */
-    public function callClass($controller, $ctrlArgs = [], $classInstance = [])
-    {
-        $reflector = new ReflectionClass($controller);
-        if (!$reflector->isInstantiable())
-            throw new \Exception('Controller [' . $controller . '] is not instantiable.');
-        $constructor = $reflector->getConstructor();
-        if (is_null($constructor))
-            return call_user_func_array($this->getConfig()['di'], [$controller]);
-        $dependencies = [];
-        foreach ($constructor->getParameters() as $arg) {
-            if (isset($ctrlArgs[$arg->name]))
-                array_push($dependencies, $ctrlArgs[$arg->name]);
-            else if (isset($classInstance[$arg->getClass()->name]))
-                array_push($dependencies, $classInstance[$arg->getClass()->name]);
-            else if (!is_null($arg->getClass())) {
-                array_push($dependencies, call_user_func_array($this->getConfig()['di'], [$arg->getClass()->name]));
-            }
-        }
-        $dependencies = array_merge($dependencies, $ctrlArgs);
-        return $reflector->newInstanceArgs($dependencies);
-    }
-
 }

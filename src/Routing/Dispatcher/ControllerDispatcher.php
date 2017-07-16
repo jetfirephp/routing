@@ -2,8 +2,11 @@
 
 namespace JetFire\Routing\Dispatcher;
 
+use JetFire\Routing\Response;
 use JetFire\Routing\ResponseInterface;
 use JetFire\Routing\Route;
+use JetFire\Routing\RouteCollection;
+use JetFire\Routing\Router;
 use ReflectionClass;
 use ReflectionMethod;
 
@@ -15,23 +18,17 @@ class ControllerDispatcher implements DispatcherInterface
 {
 
     /**
-     * @var Route
+     * @var Router
      */
-    private $route;
+    private $router;
+
 
     /**
-     * @var ResponseInterface
+     * @param Router $router
      */
-    private $response;
-
-    /**
-     * @param Route $route
-     * @param ResponseInterface $response
-     */
-    public function __construct(Route $route, ResponseInterface $response)
+    public function __construct(Router $router)
     {
-        $this->route = $route;
-        $this->response = $response;
+        $this->router = $router;
     }
 
 
@@ -40,52 +37,71 @@ class ControllerDispatcher implements DispatcherInterface
      */
     public function call()
     {
-        $reflectionMethod = new ReflectionMethod($this->route->getTarget('controller'), $this->route->getTarget('action'));
+        $classInstance = [
+            Route::class => $this->router->route,
+            Response::class => $this->router->response,
+            RouteCollection::class => $this->router->collection,
+        ];
+        
+        $reflectionMethod = new ReflectionMethod($this->router->route->getTarget('controller'), $this->router->route->getTarget('action'));
         $dependencies = [];
         $count = 0;
+
         foreach ($reflectionMethod->getParameters() as $arg) {
-            (is_null($arg->getClass()))
-                ? $count++
-                : $dependencies[] = call_user_func_array($this->route->getTarget('di'), [$arg->getClass()->name]);
+            if (!is_null($arg->getClass())) {
+                if (isset($classInstance[$arg->getClass()->name]))
+                $dependencies[] = $classInstance[$arg->getClass()->name];
+            else
+                $dependencies[] = call_user_func_array($this->router->route->getTarget('di'), [$arg->getClass()->name]);
+            } else {
+                $count++;
+            }
         }
 
-        if ($count == count($this->route->getParameters()) || ($this->route->getParameters() == '' && $count == 0)) {
-            $dependencies = array_merge($dependencies, ($this->route->getParameters() == '') ? [] : $this->route->getParameters());
-            if ($this->response->getStatusCode() == 202)
-                $this->response->setStatusCode(200);
-            if (is_array($content = $reflectionMethod->invokeArgs($this->getController(), $dependencies))) {
-                $this->route->addTarget('data', $content);
-                if (isset($this->route->getParams()['ajax']) && $this->route->getParams()['ajax'] === true) {
-                    $this->response->setContent(json_encode($content));
-                    $this->response->setHeaders(['Content-Type' => 'application/json']);
+        if ($count == count($this->router->route->getParameters()) || ($this->router->route->getParameters() == '' && $count == 0)) {
+            $dependencies = array_merge($dependencies, ($this->router->route->getParameters() == '') ? [] : $this->router->route->getParameters());
+            $content = $reflectionMethod->invokeArgs($this->getController($classInstance), $dependencies);
+            if ($content instanceof ResponseInterface) {
+                $this->router->response = $content;
+            } else {
+                if (is_array($content)) {
+                    $this->router->route->addTarget('data', $content);
+                    $content = json_encode($content);
                 }
-            } elseif (!is_null($content)) $this->response->setContent($content);
-        } else
-            $this->response->setStatusCode(404);
+                $this->router->response->setContent($content);
+            }
+        } else {
+            $this->router->response->setStatusCode(404);
+        }
     }
 
 
     /**
+     * @param array $classInstance
      * @return object
      * @throws \Exception
      */
-    private function getController()
+    private function getController($classInstance = [])
     {
-        $reflector = new ReflectionClass($this->route->getTarget('controller'));
-        if (!$reflector->isInstantiable())
-            throw new \Exception('Target [' . $this->route->getTarget('controller') . '] is not instantiable.');
+        $reflector = new ReflectionClass($this->router->route->getTarget('controller'));
+        if (!$reflector->isInstantiable()) {
+            throw new \Exception('Target [' . $this->router->route->getTarget('controller') . '] is not instantiable.');
+        }
         $constructor = $reflector->getConstructor();
         if (is_null($constructor)) {
-            $class = $this->route->getTarget('controller');
-            return call_user_func_array($this->route->getTarget('di'), [$class]);
+            $class = $this->router->route->getTarget('controller');
+            return call_user_func_array($this->router->route->getTarget('di'), [$class]);
         }
-        $dependencies = $constructor->getParameters();
-        $arguments = [];
-        foreach ($dependencies as $dep) {
+        $dependencies = [];
+        foreach ($constructor->getParameters() as $dep) {
             $class = $dep->getClass()->name;
-            array_push($arguments, call_user_func_array($this->route->getTarget('di'), [$class]));
+            if (isset($classInstance[$class])) {
+                $dependencies[] = $classInstance[$class];
+            } else {
+                $dependencies[] = call_user_func_array($this->router->route->getTarget('di'), [$class]);
+            }
         }
-        return $reflector->newInstanceArgs($arguments);
+        return $reflector->newInstanceArgs($dependencies);
     }
 
 }

@@ -2,9 +2,7 @@
 
 namespace JetFire\Routing\Dispatcher;
 
-
-use JetFire\Routing\ResponseInterface;
-use JetFire\Routing\Route;
+use JetFire\Routing\Router;
 
 /**
  * Interface DispatcherInterface
@@ -13,10 +11,9 @@ use JetFire\Routing\Route;
 interface DispatcherInterface {
 
     /**
-     * @param Route $route
-     * @param ResponseInterface $response
+     * @param Router $router
      */
-    public function __construct(Route $route, ResponseInterface $response);
+    public function __construct(Router $router);
 
     /**
      * @return mixed

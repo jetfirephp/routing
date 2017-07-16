@@ -2,9 +2,7 @@
 
 namespace JetFire\Routing\Dispatcher;
 
-
-use JetFire\Routing\ResponseInterface;
-use JetFire\Routing\Route;
+use JetFire\Routing\Router;
 
 /**
  * Class TemplateDispatcher
@@ -14,14 +12,9 @@ class TemplateDispatcher implements DispatcherInterface
 {
 
     /**
-     * @var Route
+     * @var Router
      */
-    private $route;
-
-    /**
-     * @var ResponseInterface
-     */
-    private $response;
+    private $router;
 
     /**
      * @var array
@@ -34,13 +27,11 @@ class TemplateDispatcher implements DispatcherInterface
     ];
 
     /**
-     * @param Route $route
-     * @param ResponseInterface $response
+     * @param Router $router
      */
-    public function __construct(Route $route, ResponseInterface $response)
+    public function __construct(Router $router)
     {
-        $this->route = $route;
-        $this->response = $response;
+        $this->router = $router;
     }
 
     /**
@@ -48,16 +39,15 @@ class TemplateDispatcher implements DispatcherInterface
      */
     public function call()
     {
-        if ($this->response->getStatusCode() == 202)
-            $this->setContentType($this->route->getTarget('extension'));
-        if (isset($this->route->getTarget('callback')[$this->route->getTarget('extension')]))
-            $this->response->setContent(call_user_func_array($this->route->getTarget('callback')[$this->route->getTarget('extension')], [$this->route]));
-        else {
+        $this->setContentType($this->router->route->getTarget('extension'));
+        if (isset($this->router->route->getTarget('callback')[$this->router->route->getTarget('extension')])) {
+            $this->router->response->setContent(call_user_func_array($this->router->route->getTarget('callback')[$this->router->route->getTarget('extension')], [$this->router->route]));
+        } else {
             ob_start();
-            if (isset($this->route->getTarget()['data'])) extract($this->route->getTarget('data'));
-            if (isset($this->route->getParams()['data'])) extract($this->route->getParams()['data']);
-            require($this->route->getTarget('template'));
-            $this->response->setContent(ob_get_clean());
+            if (isset($this->router->route->getTarget()['data'])) extract($this->router->route->getTarget('data'));
+            if (isset($this->router->route->getParams()['data'])) extract($this->router->route->getParams()['data']);
+            require($this->router->route->getTarget('template'));
+            $this->router->response->setContent(ob_get_clean());
         }
     }
 
@@ -66,10 +56,9 @@ class TemplateDispatcher implements DispatcherInterface
      */
     public function setContentType($extension)
     {
-        $this->response->setStatusCode(200);
         isset($this->types[$extension])
-            ? $this->response->setHeaders(['Content-Type' => $this->types[$extension]])
-            : $this->response->setHeaders(['Content-Type' => $this->types['html']]);
+            ? $this->router->response->setHeaders(['Content-Type' => $this->types[$extension]])
+            : $this->router->response->setHeaders(['Content-Type' => $this->types['html']]);
     }
 
 }

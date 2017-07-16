@@ -425,17 +425,36 @@ You can specify the request method for each route like this :
 ```php
 return [
 	
-	'/home/index' => [
-		'use' => 'Home/index.html',
-		'name' => 'home.index',
-		'method' => 'POST' // Single method accepted
+	'/api/users' => [
+		'use' => [
+		    'GET' => function($response){
+		        $response->setHeaders(['Content-Type' => 'application/json']);
+		        return ['name' => 'Peter'];
+		    },
+		    'POST' => function($response){
+                $response->setHeaders(['Content-Type' => 'application/json']);
+                $response->setStatusCode(201);
+                return [];
+            },
+		],
+		'name' => 'api.users',
+		'method' => ['GET', 'POST'] 
 	],
 
-	'/home/user-:id-:slug' => [
-		'use' => 'HomeController@user',
-		'name' => 'home.user',
-		'arguments' => ['id' => '[0-9]+','slug' => '[a-z-]*'],
-		'method' => ['GET','POST'] // Multiple methods accepted
+	'/api/users/:id' => [
+		'use' => [
+		    'GET' => function($response){
+                $response->setHeaders(['Content-Type' => 'application/json']);
+                return ['name' => 'Peter'];
+            },
+            'PUT' => function($response){
+                $response->setHeaders(['Content-Type' => 'application/json']);
+                return [];
+            },
+		],
+		'name' => 'api.user',
+		'arguments' => ['id' => '[0-9]+'],
+		'method' => ['GET','PUT'] 
 	],
 ];
 ```
@@ -457,7 +476,7 @@ $collection->setPrefix(['prefix_1','prefix_2']);
 <a name="middleware"></a>
 ### Middleware
 
-Middlewares are called after a route match the current uri. If the middleware return false, the current route is skipped.
+Middlewares are called before and after a route match the current uri.
 You have to create a middleware config file like this :
 
 ```php
@@ -494,10 +513,14 @@ return [
 ];
 ```
 
-Then you have to set the middleware config file to the `RouteCollection` like this :
+Then you have to instantiate the middleware class `Middleware` like this :
 
 ```php
-$collection->setMiddleware('your_middleware_file');
+$middleware = new Middleware($router);
+$middleware->setBeforeCallback('your_before_middleware_file');
+$middleware->setAfterCallback('your_after_middleware_file');
+
+$router->addMiddleware($middleware);
 ```
 
 Let see how to create your Middleware Class. For example we take the Global middleware :
@@ -571,7 +594,7 @@ class MyCustomMatcher implements MatcherInterface{
 
 class MyCustomDispatcher implements DispatcherInterface{
    
-    public function __construct(Route $route);
+    public function __construct(Router $router);
        
     // your target to call
     // you can get your route target information with $this->route->getTarget()
@@ -601,7 +624,7 @@ class MyCustomMatcher extends ArrayMatcher implements MatcherInterface{
 
 class MyCustomDispatcher implements DispatcherInterface{
    
-    public function __construct(Route $route);
+    public function __construct(Router $router);
        
     // your target to call
     // you can get your route target information with $this->route->getTarget()
@@ -677,14 +700,12 @@ Below is a list of the public methods and variables in the common classes you wi
 $collection->
 	routesByName								// routes url by their name
 	countRoutes									// count routes block
-	middleware									// middleware config file
 	addRoutes($collection,$options = [])		// set your routes
 	getRoutes($key = null)						// return all routes
 	getRoutePath($name,$params = []) 			// return the url of route	
 	setPrefix($prefix)							// $prefix can be a string (applied for every collection) 
 												// or an array (for each collection you can specify a prefix)
     setOption($options = [])                    // set your routes option												
-	setMiddleware($middleware)					// set you middleware config file
 	generateRoutesPath() 						// generate routes url by their name
 
 // JetFire\Routing\Router
@@ -692,8 +713,8 @@ $router->
 	response							        // JetFire\Routing\ResponseInterface instance
 	route										// JetFire\Routing\Route instance
 	collection									// JetFire\Routing\RouteCollection instance
-	middleware									// the middleware instance
-	resolver									// list of resolver
+	middlewareCollection					    // middleware collection
+	matcher									    // list of matcher
 	dispatcher									// the dispatcher instance
 	setConfig($config) 							// router configuration
 	getConfig() 								// get router configuration

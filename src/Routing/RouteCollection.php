@@ -25,10 +25,6 @@ class RouteCollection
     /**
      * @var
      */
-    public $middleware;
-    /**
-     * @var
-     */
     public $matcher;
 
     /**
@@ -112,20 +108,6 @@ class RouteCollection
     }
 
     /**
-     * @param $middleware
-     * @throws \Exception
-     */
-    public function setMiddleware($middleware)
-    {
-        if (is_string($middleware)) $middleware = rtrim($middleware, '/');
-        if (is_array($middleware))
-            $this->middleware = $middleware;
-        elseif (is_file($middleware) && is_array($mid = include $middleware))
-            $this->middleware = $mid;
-        else throw new \InvalidArgumentException('Accepted argument for setMiddleware are array and array file');
-    }
-
-    /**
      * @param string $root
      * @param string $script_file
      * @return bool
@@ -138,8 +120,9 @@ class RouteCollection
             ? $protocol . '://' . $domain . ((!empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] != 80) ? ':' . $_SERVER['SERVER_PORT'] : '') . str_replace('/' . $script_file, '', $_SERVER['SCRIPT_NAME'])
             : $root;
         $new_domain = $this->getDomain($root);
-        if (!is_null($domain) && strpos($domain, $new_domain) !== false)
+        if (!is_null($domain) && strpos($domain, $new_domain) !== false) {
             $root = str_replace($domain, $new_domain, $root);
+        }
         $count = 0;
         for ($i = 0; $i < $this->countRoutes; ++$i) {
             $prefix = (isset($this->routes['prefix_' . $i])) ? $this->routes['prefix_' . $i] : '';
@@ -147,12 +130,13 @@ class RouteCollection
             $url = (!empty($subdomain)) ? str_replace($protocol.'://',$protocol.'://'.$subdomain.'.' ,$root) : $root;
             if (isset($this->routes['routes_' . $i]))
                 foreach ($this->routes['routes_' . $i] as $route => $dependencies) {
-                    if (is_array($dependencies) && isset($dependencies['use']))
+                    if (is_array($dependencies) && isset($dependencies['use']) && !is_array($dependencies['use'])) {
                         $use = (is_callable($dependencies['use'])) ? 'closure-' . $count : trim($dependencies['use'], '/');
-                    elseif (!is_array($dependencies))
+                    } elseif (!is_array($dependencies)) {
                         $use = (is_callable($dependencies)) ? 'closure-' . $count : trim($dependencies, '/');
-                    else
+                    } else {
                         $use = $route;
+                    }
                     if (isset($route[0]) && $route[0] == '/') {
                         (!is_callable($dependencies) && isset($dependencies['name']))
                             ? $this->routesByName[$use . '#' . $dependencies['name']] = $url . $prefix . $route

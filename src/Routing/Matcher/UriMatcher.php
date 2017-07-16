@@ -2,6 +2,8 @@
 
 namespace JetFire\Routing\Matcher;
 
+use JetFire\Routing\Dispatcher\ControllerDispatcher;
+use JetFire\Routing\Dispatcher\TemplateDispatcher;
 use JetFire\Routing\Router;
 
 /**
@@ -30,9 +32,9 @@ class UriMatcher implements MatcherInterface
      * @var array
      */
     private $dispatcher = [
-        'isTemplate' => 'JetFire\Routing\Dispatcher\TemplateDispatcher',
-        'isController' => 'JetFire\Routing\Dispatcher\ControllerDispatcher',
-        'isControllerAndTemplate' => ['JetFire\Routing\Dispatcher\ControllerDispatcher','JetFire\Routing\Dispatcher\TemplateDispatcher'],
+        'isTemplate' => TemplateDispatcher::class,
+        'isController' => ControllerDispatcher::class,
+        'isControllerAndTemplate' => [ControllerDispatcher::class, TemplateDispatcher::class],
     ];
 
     /**
@@ -46,14 +48,16 @@ class UriMatcher implements MatcherInterface
     /**
      * @param array $resolver
      */
-    public function setResolver($resolver = []){
+    public function setResolver($resolver = [])
+    {
         $this->resolver = $resolver;
     }
 
     /**
      * @param string $resolver
      */
-    public function addResolver($resolver){
+    public function addResolver($resolver)
+    {
         $this->resolver[] = $resolver;
     }
 
@@ -77,7 +81,8 @@ class UriMatcher implements MatcherInterface
      * @param $method
      * @param $class
      */
-    public function addDispatcher($method,$class){
+    public function addDispatcher($method, $class)
+    {
         $this->dispatcher[$method] = $class;
     }
 
@@ -86,12 +91,9 @@ class UriMatcher implements MatcherInterface
      */
     public function match()
     {
-        foreach($this->resolver as $resolver){
-            if(is_array($target = call_user_func([$this,$resolver]))) {
+        foreach ($this->resolver as $resolver) {
+            if (is_array($target = call_user_func([$this, $resolver]))) {
                 $this->setTarget($target);
-                if($this->router->middleware->globalMiddleware() === false || $this->router->middleware->blockMiddleware() === false || $this->router->middleware->classMiddleware() === false || $this->router->middleware->routeMiddleware() === false)
-                    return null;
-                $this->router->response->setStatusCode(202);
                 return true;
             }
         }
@@ -101,21 +103,23 @@ class UriMatcher implements MatcherInterface
     /**
      * @param array $target
      */
-    public function setTarget($target = []){
+    public function setTarget($target = [])
+    {
         $index = isset($this->request['collection_index']) ? $this->request['collection_index'] : 0;
         $this->router->route->setDetail($this->request);
         $this->router->route->setTarget($target);
-        $this->router->route->addTarget('block', $this->router->collection->getRoutes('block_'.$index));
-        $this->router->route->addTarget('view_dir', $this->router->collection->getRoutes('view_dir_'.$index));
+        $this->router->route->addTarget('block', $this->router->collection->getRoutes('block_' . $index));
+        $this->router->route->addTarget('view_dir', $this->router->collection->getRoutes('view_dir_' . $index));
     }
 
     /**
      * @return array|bool
      */
-    public function isControllerAndTemplate(){
-        if(is_array($ctrl = $this->isController())) {
+    public function isControllerAndTemplate()
+    {
+        if (is_array($ctrl = $this->isController())) {
             if (is_array($tpl = $this->isTemplate())) {
-                return array_merge(array_merge($ctrl, $tpl),[
+                return array_merge(array_merge($ctrl, $tpl), [
                     'dispatcher' => $this->dispatcher['isControllerAndTemplate']
                 ]);
             }
@@ -131,9 +135,9 @@ class UriMatcher implements MatcherInterface
     {
         foreach ($this->router->getConfig()['templateExtension'] as $extension) {
             for ($i = 0; $i < $this->router->collection->countRoutes; ++$i) {
-                $url = explode('/', str_replace($this->router->collection->getRoutes('prefix_' . $i), '',$this->router->route->getUrl()));
+                $url = explode('/', str_replace($this->router->collection->getRoutes('prefix_' . $i), '', $this->router->route->getUrl()));
                 $end = array_pop($url);
-                $url = implode('/', array_map('ucwords', $url)).'/'.$end;
+                $url = implode('/', array_map('ucwords', $url)) . '/' . $end;
                 if (is_file(($template = rtrim($this->router->collection->getRoutes('view_dir_' . $i), '/') . $url . $extension))) {
                     $this->request['collection_index'] = $i;
                     return [
@@ -155,13 +159,13 @@ class UriMatcher implements MatcherInterface
     {
         $routes = array_slice(explode('/', $this->router->route->getUrl()), 1);
         $i = 0;
-        do{
-            $route =  ('/' . $routes[0] == $this->router->collection->getRoutes('prefix_' . $i)) ? array_slice($routes, 1) : $routes;
+        do {
+            $route = ('/' . $routes[0] == $this->router->collection->getRoutes('prefix_' . $i)) ? array_slice($routes, 1) : $routes;
             if (isset($route[0])) {
-                $class =  (class_exists($this->router->collection->getRoutes('ctrl_namespace_' . $i). ucfirst($route[0]) . 'Controller'))
-                    ? $this->router->collection->getRoutes('ctrl_namespace_' . $i). ucfirst($route[0]) . 'Controller'
+                $class = (class_exists($this->router->collection->getRoutes('ctrl_namespace_' . $i) . ucfirst($route[0]) . 'Controller'))
+                    ? $this->router->collection->getRoutes('ctrl_namespace_' . $i) . ucfirst($route[0]) . 'Controller'
                     : ucfirst($route[0]) . 'Controller';
-                $route[1] = isset($route[1])?$route[1]:'index';
+                $route[1] = isset($route[1]) ? $route[1] : 'index';
                 if (method_exists($class, $route[1])) {
                     $this->request['parameters'] = array_slice($route, 2);
                     $this->request['collection_index'] = $i;
@@ -174,7 +178,7 @@ class UriMatcher implements MatcherInterface
                 }
             }
             ++$i;
-        }while($i < $this->router->collection->countRoutes);
+        } while ($i < $this->router->collection->countRoutes);
         return false;
     }
 

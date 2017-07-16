@@ -35,4 +35,20 @@ return [
 		'method' => 'POST',
         'name' => 'search'
 	],
+	
+	'/api/users' => [
+		'use' => [
+			'GET' => function($response){
+				$response->setStatusCode(500);
+			}
+		]
+	],
+	'/api/users/1' => [
+		'use' => [
+			'GET' => function($response){
+				$response->setHeaders(['Content-Type' => 'application/json']);
+				return ['name' => 'Peter'];
+			}
+		]
+	]
 ];

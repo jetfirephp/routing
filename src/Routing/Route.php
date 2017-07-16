@@ -42,11 +42,13 @@ class Route
      */
     public function __construct()
     {
-        $request_method = (isset($_SERVER['REQUEST_METHOD'])) ? $_SERVER['REQUEST_METHOD'] : 'GET';
-        $this->method = (
-            isset($_POST['_METHOD'])
-            && in_array($_POST['_METHOD'], array('PUT', 'DELETE'))
-        ) ? $_POST['_METHOD'] : $request_method;
+        $this->method = (isset($_SERVER['REQUEST_METHOD'])) ? $_SERVER['REQUEST_METHOD'] : 'GET';
+        if ($this->method == 'POST' && isset($_SERVER['X-HTTP-METHOD-OVERRIDE'])) {
+            $this->method = strtoupper($_SERVER['X-HTTP-METHOD-OVERRIDE']);
+        }
+        if (isset($_POST['_METHOD']) && in_array($_POST['_METHOD'], array('PUT', 'PATCH', 'HEAD', 'DELETE'))) {
+            $this->method = $_POST['_METHOD'];
+        }
     }
 
     /**
@@ -129,7 +131,7 @@ class Route
      */
     public function setDetail($detail)
     {
-        $this->detail = array_merge($detail,$this->detail);
+        $this->detail = array_merge($detail, $this->detail);
     }
 
     /**
@@ -183,8 +185,9 @@ class Route
     /**
      * @return array
      */
-    public function getData(){
-        return (isset($this->getDetail()['data']) && is_array($this->getDetail()['data']))?$this->getDetail()['data']:[];
+    public function getData()
+    {
+        return (isset($this->getDetail()['data']) && is_array($this->getDetail()['data'])) ? $this->getDetail()['data'] : [];
     }
 
     /**

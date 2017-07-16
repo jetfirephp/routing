@@ -61,19 +61,7 @@ class RouteCollectionTest extends PHPUnit_Framework_TestCase{
         $this->assertEquals('/public',$this->collection->getRoutes('prefix_0'));
         $this->assertEquals('/user',$this->collection->getRoutes('prefix_1'));
     }
-
-    /**
-     * @expectedException InvalidArgumentException
-     */
-    public function testInvalidMiddleware(){
-        $this->collection->setMiddleware('/Config/middleware.inc.php');
-    }
-
-    public function testMiddleware(){
-        $this->collection->setMiddleware(ROOT.'/Config/middleware.inc.php');
-        $this->assertTrue(is_array($this->collection->middleware));
-    }
-
+    
     /**
      * @depends testCountRoutes
      * @param RouteCollection $collection
