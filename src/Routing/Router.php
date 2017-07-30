@@ -143,10 +143,7 @@ class Router
             if ($middleware instanceof MiddlewareInterface) {
                 foreach ($middleware->getCallbacks() as $callback) {
                     if (method_exists($middleware, $callback)) {
-                        $response = call_user_func_array([$middleware, $callback], [$action]);
-                        if($response instanceof ResponseInterface) {
-                            $this->response = $response;
-                        }
+                        call_user_func_array([$middleware, $callback], [$action]);
                     }
                 }
             }

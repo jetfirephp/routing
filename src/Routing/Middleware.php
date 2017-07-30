@@ -101,8 +101,7 @@ class Middleware implements MiddlewareInterface
     {
         if (isset($this->middleware[$action]['global_middleware'])) {
             foreach ($this->middleware[$action]['global_middleware'] as $callback) {
-                $response = $this->callHandler($callback);
-                if ($response instanceof ResponseInterface) return $response;
+                $this->callHandler($callback);
             }
         }
         return true;
@@ -120,8 +119,7 @@ class Middleware implements MiddlewareInterface
                 $blocks = $this->middleware[$action]['block_middleware'][$this->router->route->getTarget('block')];
                 if (is_array($blocks)) {
                     foreach ($blocks as $block) {
-                        $response = $this->callHandler($block);
-                        if ($response instanceof ResponseInterface) return $response;
+                        $this->callHandler($block);
                     }
                 } elseif (is_string($blocks)) {
                     return $this->callHandler($blocks);
@@ -144,8 +142,7 @@ class Middleware implements MiddlewareInterface
                 $classes = $this->middleware[$action]['class_middleware'][$ctrl];
                 if (is_array($classes)) {
                     foreach ($classes as $class) {
-                        $response = $this->callHandler($class);
-                        if ($response instanceof ResponseInterface) return $response;
+                        $this->callHandler($class);
                     }
                 } elseif (is_string($classes)) {
                     return $this->callHandler($classes);
@@ -167,8 +164,7 @@ class Middleware implements MiddlewareInterface
                 $classes = $this->middleware[$action]['route_middleware'][$this->router->route->getPath()['middleware']];
                 if (is_array($classes)) {
                     foreach ($classes as $class) {
-                        $response = $this->callHandler($class);
-                        if ($response instanceof ResponseInterface) return $response;
+                        $this->callHandler($class);
                     }
                 } elseif (is_string($classes)) {
                     return $this->callHandler($classes);
@@ -197,7 +193,11 @@ class Middleware implements MiddlewareInterface
                     }
                 }
                 $dependencies = array_merge($dependencies, [$this->router->route]);
-                return $reflectionMethod->invokeArgs($instance, $dependencies);
+                $response = $reflectionMethod->invokeArgs($instance, $dependencies);
+                if($response instanceof ResponseInterface) {
+                    $this->router->response = $response;
+                }
+                return $response;
             }
         }
         return true;
