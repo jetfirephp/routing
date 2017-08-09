@@ -110,11 +110,12 @@ class RouteCollection
     /**
      * @param string $root
      * @param string $script_file
+     * @param string $protocol
      * @return bool
      */
-    public function generateRoutesPath($root = null, $script_file = 'index.php')
+    public function generateRoutesPath($root = null, $script_file = 'index.php', $protocol = 'http')
     {
-        $protocol = isset($_SERVER['REQUEST_SCHEME']) ? $_SERVER['REQUEST_SCHEME'] : 'http';
+        $protocol = isset($_SERVER['REQUEST_SCHEME']) ? $_SERVER['REQUEST_SCHEME'] : $protocol;
         $domain = isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : null;
         $root = (is_null($root))
             ? $protocol . '://' . $domain . ((!empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] != 80) ? ':' . $_SERVER['SERVER_PORT'] : '') . str_replace('/' . $script_file, '', $_SERVER['SCRIPT_NAME'])
@@ -138,9 +139,10 @@ class RouteCollection
                         $use = $route;
                     }
                     if (isset($route[0]) && $route[0] == '/') {
+                        $full_url = rtrim($url, '/') . '/' . trim($prefix, '/') . '/' . ltrim($route, '/');
                         (!is_callable($dependencies) && isset($dependencies['name']))
-                            ? $this->routesByName[$use . '#' . $dependencies['name']] = $url . $prefix . $route
-                            : $this->routesByName[$use] = $url . $prefix . $route;
+                            ? $this->routesByName[$use . '#' . $dependencies['name']] = $full_url
+                            : $this->routesByName[$use] = $full_url;
                     } else {
                         (!is_callable($dependencies) && isset($dependencies['name']))
                             ? $this->routesByName[$use . '#' . $dependencies['name']] = $protocol . '://' . str_replace('{host}', $new_domain, $route) . $prefix
