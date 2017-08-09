@@ -105,30 +105,37 @@ class RouteCollection
         $this->routes['ctrl_namespace_' . $i] = (isset($args['ctrl_namespace']) && !empty($args['ctrl_namespace'])) ? trim($args['ctrl_namespace'], '\\') . '\\' : '';
         $this->routes['prefix_' . $i] = (isset($args['prefix']) && !empty($args['prefix'])) ? '/' . trim($args['prefix'], '/') : '';
         $this->routes['subdomain_' . $i] = (isset($args['subdomain'])) ? $args['subdomain'] : '';
+        $this->routes['protocol_' . $i] = (isset($args['protocol'])) ? $args['protocol'] : 'http';
     }
 
     /**
      * @param string $root
      * @param string $script_file
-     * @param string $protocol
      * @return bool
      */
-    public function generateRoutesPath($root = null, $script_file = 'index.php', $protocol = 'http')
+    public function generateRoutesPath($root = null, $script_file = 'index.php')
     {
-        $protocol = isset($_SERVER['REQUEST_SCHEME']) ? $_SERVER['REQUEST_SCHEME'] : $protocol;
+        $protocol = isset($_SERVER['REQUEST_SCHEME']) ? $_SERVER['REQUEST_SCHEME'] : 'http';
         $domain = isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : null;
-        $root = (is_null($root))
-            ? $protocol . '://' . $domain . ((!empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] != 80) ? ':' . $_SERVER['SERVER_PORT'] : '') . str_replace('/' . $script_file, '', $_SERVER['SCRIPT_NAME'])
-            : $root;
+
+        if(!is_null($root)){
+            $protocol = explode('://', $root);
+            $protocol = $protocol[0];
+        }else{
+            $root = $protocol . '://' . $domain . ((!empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] != 80) ? ':' . $_SERVER['SERVER_PORT'] : '') . str_replace('/' . $script_file, '', $_SERVER['SCRIPT_NAME']);
+        }
+
         $new_domain = $this->getDomain($root);
         if (!is_null($domain) && strpos($domain, $new_domain) !== false) {
             $root = str_replace($domain, $new_domain, $root);
         }
+
         $count = 0;
         for ($i = 0; $i < $this->countRoutes; ++$i) {
             $prefix = (isset($this->routes['prefix_' . $i])) ? $this->routes['prefix_' . $i] : '';
             $subdomain = (isset($this->routes['subdomain_' . $i])) ? $this->routes['subdomain_' . $i] : '';
-            $url = (!empty($subdomain)) ? str_replace($protocol.'://',$protocol.'://'.$subdomain.'.' ,$root) : $root;
+            $block_protocol = (isset($this->routes['protocol_' . $i])) ? $this->routes['protocol_' . $i] : 'http';
+            $url = (!empty($subdomain)) ? str_replace($protocol . '://', $block_protocol . '://' . $subdomain . '.', $root) : $root;
             if (isset($this->routes['routes_' . $i]))
                 foreach ($this->routes['routes_' . $i] as $route => $dependencies) {
                     if (is_array($dependencies) && isset($dependencies['use']) && !is_array($dependencies['use'])) {
@@ -139,14 +146,15 @@ class RouteCollection
                         $use = $route;
                     }
                     if (isset($route[0]) && $route[0] == '/') {
-                        $full_url = rtrim($url, '/') . '/' . trim($prefix, '/') . '/' . ltrim($route, '/');
+                        $full_url = rtrim($url, '/') . '/' . trim($prefix, '/') . (empty($prefix) ? '' : '/') . trim($route, '/');
                         (!is_callable($dependencies) && isset($dependencies['name']))
                             ? $this->routesByName[$use . '#' . $dependencies['name']] = $full_url
                             : $this->routesByName[$use] = $full_url;
                     } else {
+                        $full_url = $block_protocol . '://' . str_replace('{host}', $new_domain, $route);
                         (!is_callable($dependencies) && isset($dependencies['name']))
-                            ? $this->routesByName[$use . '#' . $dependencies['name']] = $protocol . '://' . str_replace('{host}', $new_domain, $route) . $prefix
-                            : $this->routesByName[$use] = $protocol . '://' . str_replace('{host}', $new_domain, $route) . $prefix;
+                            ? $this->routesByName[$use . '#' . $dependencies['name']] = $full_url . $prefix
+                            : $this->routesByName[$use] = $full_url . $prefix;
                     }
                     $count++;
                 }
