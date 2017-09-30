@@ -20,7 +20,7 @@ class Middleware implements MiddlewareInterface
     /**
      * @var array
      */
-    private $callbacks = [
+    protected $callbacks = [
         'globalMiddleware',
         'blockMiddleware',
         'classMiddleware',
@@ -95,44 +95,31 @@ class Middleware implements MiddlewareInterface
     /**
      * @description global middleware
      * @param $action
-     * @return bool|mixed
      */
     public function globalMiddleware($action)
     {
         if (isset($this->middleware[$action]['global_middleware'])) {
-            foreach ($this->middleware[$action]['global_middleware'] as $callback) {
-                $this->callHandler($callback);
-            }
+            $this->callHandlers($this->middleware[$action]['global_middleware']);
         }
-        return true;
     }
 
     /**
      * @description block middleware
      * @param $action
-     * @return bool|mixed
      */
     public function blockMiddleware($action)
     {
         if (isset($this->middleware[$action]['block_middleware'])) {
             if (isset($this->middleware[$action]['block_middleware'][$this->router->route->getTarget('block')])) {
                 $blocks = $this->middleware[$action]['block_middleware'][$this->router->route->getTarget('block')];
-                if (is_array($blocks)) {
-                    foreach ($blocks as $block) {
-                        $this->callHandler($block);
-                    }
-                } elseif (is_string($blocks)) {
-                    return $this->callHandler($blocks);
-                }
+                $this->callHandlers($blocks);
             }
         }
-        return true;
     }
 
     /**
      * @description controller middleware
      * @param $action
-     * @return bool|mixed
      */
     public function classMiddleware($action)
     {
@@ -140,49 +127,47 @@ class Middleware implements MiddlewareInterface
             $ctrl = str_replace('\\', '/', $this->router->route->getTarget('controller'));
             if (isset($this->middleware[$action]['class_middleware'][$ctrl]) && class_exists($this->router->route->getTarget('controller'))) {
                 $classes = $this->middleware[$action]['class_middleware'][$ctrl];
-                if (is_array($classes)) {
-                    foreach ($classes as $class) {
-                        $this->callHandler($class);
-                    }
-                } elseif (is_string($classes)) {
-                    return $this->callHandler($classes);
-                }
+                $this->callHandlers($classes);
             }
         }
-        return true;
     }
 
     /**
      * @description route middleware
      * @param $action
-     * @return bool|mixed
      */
     public function routeMiddleware($action)
     {
         if (isset($this->middleware[$action]['route_middleware'])) {
             if (isset($this->router->route->getPath()['middleware']) && class_exists($this->middleware[$action]['route_middleware'][$this->router->route->getPath()['middleware']])) {
                 $classes = $this->middleware[$action]['route_middleware'][$this->router->route->getPath()['middleware']];
-                if (is_array($classes)) {
-                    foreach ($classes as $class) {
-                        $this->callHandler($class);
-                    }
-                } elseif (is_string($classes)) {
-                    return $this->callHandler($classes);
-                }
+                $this->callHandlers($classes);
             }
         }
-        return true;
+    }
+
+    /**
+     * @param $handlers
+     */
+    private function callHandlers($handlers){
+        $handlers = is_array($handlers) ? $handlers : [$handlers];
+        foreach ($handlers as $handler) {
+            if($this->handle($handler) !== true){
+                break;
+            }
+        }
     }
 
     /**
      * @param $callback
      * @return mixed
      */
-    private function callHandler($callback)
+    private function handle($callback)
     {
         $callback = explode('@', $callback);
+        $response = true;
         $method = isset($callback[1]) ? $callback[1] : 'handle';
-        if(class_exists($callback[0])) {
+        if (class_exists($callback[0])) {
             $instance = call_user_func($this->router->getConfig()['di'], $callback[0]);
             if (method_exists($instance, $method)) {
                 $reflectionMethod = new ReflectionMethod($instance, $method);
@@ -194,13 +179,12 @@ class Middleware implements MiddlewareInterface
                 }
                 $dependencies = array_merge($dependencies, [$this->router->route]);
                 $response = $reflectionMethod->invokeArgs($instance, $dependencies);
-                if($response instanceof ResponseInterface) {
+                if ($response instanceof ResponseInterface) {
                     $this->router->response = $response;
                 }
-                return $response;
             }
         }
-        return true;
+        return $response;
     }
 
     /**
