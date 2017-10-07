@@ -221,9 +221,15 @@ class ArrayMatcher implements MatcherInterface
     private function checkRequest($key)
     {
         if (strpos($this->request[$key], ':') !== false && isset($this->request['parameters'][0])) {
+            $replacements = $this->request['parameters'];
+            $keys = [];
             $this->request['@' . $key] = $this->request[$key];
-            $this->request[$key] = $this->request['parameters'][0];
-            unset($this->request['parameters'][0]);
+            $this->request[$key] = preg_replace_callback('#:([\w]+)#', function ($matches) use (&$replacements, &$keys) {
+                $keys[$matches[0]] = $replacements[0];
+                return array_shift($replacements);
+            }, $this->request[$key]);
+            $this->request['keys'] = $keys;
+            $this->request['parameters'] = $replacements;
         }
     }
 

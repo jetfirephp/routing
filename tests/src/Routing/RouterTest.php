@@ -288,11 +288,6 @@ class RouterTest extends PHPUnit_Framework_TestCase
      */
     public function testResponse()
     {
-        $this->router->setResponses([
-            '404' => function () {
-                echo '404';
-            },
-        ]);
         $this->router->setUrl('/notfound');
         $this->assertFalse($this->router->match());
     }

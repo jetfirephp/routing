@@ -28,7 +28,6 @@ V1.0
 * [Template resolver](#template-resolver)
 * [Controller resolver](#controller-resolver)
 * [Route Middleware](#middleware)
-* [Custom response](#response)
 * [Integration with other libraries](#libraries)
 
 ### Getting started
@@ -539,25 +538,7 @@ class Global{
 }
 ```
 See the API section to learn how to handle your $route in middleware class.
-<a name="response"></a>
-### Custom Response
 
-If you want to handle custom 404,450... error template, you can do it like this :
-
-```php
-$router->setResponses([
-	// you can use a closure to handle error
-    '404' => function(){
-        return '404';
-    },
-    
-    // or a template
-    '404' => 'app/Blocks/PublicBlock/Views/404.html',
-    
-    // or a controller method
-    '404' => 'ErrorController@notFound'
-]);
-```
 <a name="custom-matcher"></a>
 ### Custom Matcher and Dispatcher
 
@@ -718,8 +699,7 @@ $router->
 	dispatcher									// the dispatcher instance
 	setConfig($config) 							// router configuration
 	getConfig() 								// get router configuration
-	run() 										// run the router with the request url
-	setResponse($response = [])					// set your custom 404,405,500 ... routes 
+	run() 										// run the router with the request url 
 
 // JetFire\Routing\Route
 $route->

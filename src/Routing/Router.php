@@ -126,11 +126,11 @@ class Router
             if (!in_array(substr($this->response->getStatusCode(), 0, 1), [3,4,5])) {
                 $this->callTarget();
             }
-            $this->callMiddleware('after');
         }else{
             $this->response->setStatusCode(404);
         }
-        return $this->callResponse();
+        $this->callMiddleware('after');
+        return $this->response->send();
     }
 
     /**
@@ -183,42 +183,5 @@ class Router
                 call_user_func([$this->dispatcher, 'call']);
             }
         }
-    }
-
-    /**
-     * @param array $responses
-     */
-    public function setResponses($responses = [])
-    {
-        $this->route->addDetail('response_templates', $responses);
-    }
-
-    /**
-     * @description set response code
-     */
-    public function callResponse()
-    {
-        if (isset($this->route->getDetail()['response_templates']) && isset($this->route->getDetail()['response_templates'][$code = $this->response->getStatusCode()])) {
-            $this->route->setCallback($this->route->getDetail()['response_templates'][$code]);
-            $matcher = null;
-            foreach ($this->matcher as $instance) {
-                if ($instance instanceof ArrayMatcher) {
-                    $matcher = $instance;
-                }
-            }
-            if (is_null($matcher)) {
-                $matcher = new ArrayMatcher($this);
-            }
-            foreach (call_user_func([$matcher, 'getResolver']) as $match) {
-                if (is_array($target = call_user_func_array([$matcher, $match], [$this->route->getCallback()]))) {
-                    call_user_func_array([$matcher, 'setTarget'], [$target]);
-                    $this->callTarget();
-                    break;
-                }
-            }
-            $this->response->setStatusCode($code);
-        }
-
-        return $this->response->send();
     }
 }
