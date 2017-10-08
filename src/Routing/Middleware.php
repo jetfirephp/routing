@@ -16,6 +16,10 @@ class Middleware implements MiddlewareInterface
      * @var Router
      */
     private $router;
+    /**
+     * @var bool
+     */
+    private $next = true;
 
     /**
      * @var array
@@ -148,11 +152,12 @@ class Middleware implements MiddlewareInterface
 
     /**
      * @param $handlers
+     * @param array $params
      */
-    private function callHandlers($handlers){
+    private function callHandlers($handlers, $params = []){
         $handlers = is_array($handlers) ? $handlers : [$handlers];
         foreach ($handlers as $handler) {
-            if($this->handle($handler) !== true){
+            if($this->next && $this->handle($handler, $params) !== true){
                 break;
             }
         }
@@ -160,9 +165,10 @@ class Middleware implements MiddlewareInterface
 
     /**
      * @param $callback
+     * @param array $params
      * @return mixed
      */
-    private function handle($callback)
+    private function handle($callback, $params = [])
     {
         $callback = explode('@', $callback);
         $response = true;
@@ -171,7 +177,7 @@ class Middleware implements MiddlewareInterface
             $instance = call_user_func($this->router->getConfig()['di'], $callback[0]);
             if (method_exists($instance, $method)) {
                 $reflectionMethod = new ReflectionMethod($instance, $method);
-                $dependencies = [];
+                $dependencies = $params;
                 foreach ($reflectionMethod->getParameters() as $arg) {
                     if (!is_null($arg->getClass())) {
                         $dependencies[] = $this->getClass($arg->getClass()->name);
@@ -179,7 +185,14 @@ class Middleware implements MiddlewareInterface
                 }
                 $dependencies = array_merge($dependencies, [$this->router->route]);
                 $response = $reflectionMethod->invokeArgs($instance, $dependencies);
-                if ($response instanceof ResponseInterface) {
+                if(is_array($response) && isset($response['call'])){
+                    if(isset($response['response']) && $response['response'] instanceof ResponseInterface){
+                        $this->router->response = $response['response'];
+                    }
+                    $params = isset($response['params']) ? $response['params']: [];
+                    $this->callHandlers($response['call'], $params);
+                    $this->next = isset($response['next']) ? (bool)$response['next'] : false;
+                } else if ($response instanceof ResponseInterface) {
                     $this->router->response = $response;
                 }
             }

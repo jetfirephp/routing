@@ -106,6 +106,7 @@ class RouteCollection
         $this->routes['prefix_' . $i] = (isset($args['prefix']) && !empty($args['prefix'])) ? '/' . trim($args['prefix'], '/') : '';
         $this->routes['subdomain_' . $i] = (isset($args['subdomain'])) ? $args['subdomain'] : '';
         $this->routes['protocol_' . $i] = (isset($args['protocol'])) ? $args['protocol'] : 'http';
+        $this->routes['params_' . $i] = (isset($args['params'])) ? $args['params'] : [];
     }
 
     /**

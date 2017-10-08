@@ -213,6 +213,7 @@ class ArrayMatcher implements MatcherInterface
         $this->router->route->setTarget($target);
         $this->router->route->addTarget('block', $this->router->collection->getRoutes('block_' . $index));
         $this->router->route->addTarget('view_dir', $this->router->collection->getRoutes('view_dir_' . $index));
+        $this->router->route->addTarget('params', $this->router->collection->getRoutes('params_' . $index));
     }
 
     /**
