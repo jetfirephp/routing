@@ -171,12 +171,7 @@ class ArrayMatcher implements MatcherInterface
      */
     private function routeMatch($regex)
     {
-        if (substr($this->request['route'], -1) == '*') {
-            $pos = strpos($this->request['route'], '*');
-            if (substr($this->router->route->getUrl(), 0, $pos) == substr($this->request['route'], 0, $pos) && isset($this->request['params'])) {
-                return true;
-            }
-        }
+        $regex = (substr($this->request['route'], -1) == '*') ? '#^' . $this->request['route'] . '#' : $regex;
         if (preg_match($regex, $this->router->route->getUrl(), $this->request['parameters'])) {
             array_shift($this->request['parameters']);
             return true;
@@ -244,9 +239,9 @@ class ArrayMatcher implements MatcherInterface
                 $this->router->route->setCallback($this->request['params']);
             } else {
                 if (is_array($this->request['params']) && isset($this->request['params']['use'])) {
-                    if(is_array($this->request['params']['use']) && isset($this->request['params']['use'][$this->router->route->getMethod()])){
+                    if (is_array($this->request['params']['use']) && isset($this->request['params']['use'][$this->router->route->getMethod()])) {
                         $this->router->route->setCallback($this->request['params']['use'][$this->router->route->getMethod()]);
-                    }elseif(!is_array($this->request['params']['use'])){
+                    } elseif (!is_array($this->request['params']['use'])) {
                         $this->router->route->setCallback($this->request['params']['use']);
                     }
                 } else {
@@ -340,9 +335,10 @@ class ArrayMatcher implements MatcherInterface
             $routes = explode('@', $callback);
             if (!isset($routes[1])) $routes[1] = 'index';
             if ($routes[1] == '{method}') {
-                $this->request['parameters'] = explode('/', str_replace(str_replace('*', '', $this->request['route']), '', $this->router->route->getUrl()));
-                $routes[1] = $this->request['parameters'][0];
-                array_shift($this->request['parameters']);
+                $params = explode('/', preg_replace('#' . str_replace('*', '', $this->request['route']) . '#', '', $this->router->route->getUrl()));
+                $routes[1] = $params[0];
+                array_shift($params);
+                array_merge($this->request['parameters'], $params);
                 if (preg_match('/[A-Z]/', $routes[1])) return false;
                 $routes[1] = lcfirst(str_replace(' ', '', ucwords(str_replace('-', ' ', $routes[1]))));
             }
