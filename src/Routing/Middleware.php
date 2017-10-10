@@ -89,11 +89,12 @@ class Middleware implements MiddlewareInterface
     }
 
     /**
+     * @param $action
      * @return Router
      */
-    public function getCallbacks()
+    public function getCallbacks($action)
     {
-        return $this->callbacks;
+        return $action == 'before' ? $this->callbacks : array_reverse($this->callbacks);
     }
 
     /**

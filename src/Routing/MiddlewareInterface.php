@@ -17,9 +17,10 @@ interface MiddlewareInterface
     public function __construct(Router $router);
 
     /**
+     * @param $action
      * @return array
      */
-    public function getCallbacks();
+    public function getCallbacks($action);
 
     /**
      * @return array
