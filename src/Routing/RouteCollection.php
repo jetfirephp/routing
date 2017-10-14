@@ -180,14 +180,14 @@ class RouteCollection
     /**
      * @param null $name
      * @param array $params
-     * @param string $subdomain
      * @return mixed
      */
-    public function getRoutePath($name, $params = [], $subdomain = '')
+    public function getRoutePath($name, $params = [])
     {
         foreach ($this->routesByName as $key => $route) {
             $param = explode('#', $key);
-            $route = str_replace('{subdomain}', $subdomain, $route);
+            if(isset($params['{subdomain}'])) $route = str_replace('*', $params['{subdomain}'], $route);
+            if(isset($params['{method}'])) $route = str_replace('*', $params['{method}'], $route);
             foreach ($params as $key2 => $value) $route = str_replace(':' . $key2, $value, $route);
             if ($param[0] == trim($name, '/')) return $route;
             else if (isset($param[1]) && $param[1] == $name) return $route;

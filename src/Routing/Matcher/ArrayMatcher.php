@@ -336,7 +336,8 @@ class ArrayMatcher implements MatcherInterface
             if (!isset($routes[1])) $routes[1] = 'index';
             if ($routes[1] == '{method}') {
                 $params = explode('/', preg_replace('#' . str_replace('*', '', $this->request['route']) . '#', '', $this->router->route->getUrl()));
-                $routes[1] = $params[0];
+                $routes[1] = empty($params[0]) ? 'index' : $params[0];
+                $this->request['@method'] = $routes[1];
                 array_shift($params);
                 array_merge($this->request['parameters'], $params);
                 if (preg_match('/[A-Z]/', $routes[1])) return false;
@@ -372,7 +373,8 @@ class ArrayMatcher implements MatcherInterface
     public function isTemplate($callback)
     {
         if (is_string($callback) && strpos($callback, '@') === false) {
-            $path = trim($callback, '/');
+            $replace = isset($this->request['@method']) ? str_replace('-', '_', $this->request['@method']) : 'index';
+            $path = str_replace('{template}', $replace, trim($callback, '/'));
             $extension = substr(strrchr($path, "."), 1);
             $index = isset($this->request['collection_index']) ? $this->request['collection_index'] : 0;
             $viewDir = $this->router->collection->getRoutes('view_dir_' . $index);
