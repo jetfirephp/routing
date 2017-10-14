@@ -51,14 +51,14 @@ class MiddlewareTest extends PHPUnit_Framework_TestCase{
      * @expectedException InvalidArgumentException
      */
     public function testInvalidMiddleware(){
-        $this->middleware->setBeforeCallback('/Config/middleware.inc.php');
+        $this->middleware->setCallbackAction('before', '/Config/middleware.inc.php');
     }
 
     /**
      *
      */
     public function testMiddleware(){
-        $this->middleware->setBeforeCallback(ROOT.'/Config/middleware.inc.php');
+        $this->middleware->setCallbackAction('before', ROOT.'/Config/middleware.inc.php');
         $this->assertTrue(is_array($this->middleware->getMiddleware()['before']));
     }
 

@@ -53,21 +53,13 @@ class Middleware implements MiddlewareInterface
     }
 
     /**
+     * @param $action
      * @param $middleware
      * @return mixed|void
      */
-    public function setBeforeCallback($middleware)
+    public function setCallbackAction($action, $middleware)
     {
-        $this->setMiddleware('before', $middleware);
-    }
-
-    /**
-     * @param $middleware
-     * @return mixed|void
-     */
-    public function setAfterCallback($middleware)
-    {
-        $this->setMiddleware('after', $middleware);
+        $this->setMiddleware($action, $middleware);
     }
 
     /**
@@ -94,7 +86,7 @@ class Middleware implements MiddlewareInterface
      */
     public function getCallbacks($action)
     {
-        return $action == 'before' ? $this->callbacks : array_reverse($this->callbacks);
+        return $action == 'after' ? array_reverse($this->callbacks) : $this->callbacks;
     }
 
     /**

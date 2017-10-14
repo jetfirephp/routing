@@ -516,8 +516,9 @@ Then you have to instantiate the middleware class `Middleware` like this :
 
 ```php
 $middleware = new Middleware($router);
-$middleware->setBeforeCallback('your_before_middleware_file');
-$middleware->setAfterCallback('your_after_middleware_file');
+$middleware->setCallbackAction('before', 'your_before_middleware_file');
+$middleware->setCallbackAction('between', 'your_between_middleware_file');
+$middleware->setCallbackAction('after', 'your_after_middleware_file');
 
 $router->addMiddleware($middleware);
 ```

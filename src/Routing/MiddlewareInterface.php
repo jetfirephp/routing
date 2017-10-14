@@ -28,14 +28,9 @@ interface MiddlewareInterface
     public function getMiddleware();
 
     /**
+     * @param $action
      * @param $middleware
      * @return mixed
      */
-    public function setBeforeCallback($middleware);
-
-    /**
-     * @param $middleware
-     * @return mixed
-     */
-    public function setAfterCallback($middleware);
+    public function setCallbackAction($action, $middleware);
 }

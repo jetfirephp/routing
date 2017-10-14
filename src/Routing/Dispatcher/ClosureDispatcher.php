@@ -48,6 +48,7 @@ class ClosureDispatcher implements DispatcherInterface
                 $this->router->route->addTarget('data', $content);
                 $content = json_encode($content);
             }
+            $this->router->callMiddleware('between');
             $this->router->response->setContent($content);
         }
     }

@@ -137,7 +137,7 @@ class Router
      * @description call the middleware before and after the target
      * @param $action
      */
-    private function callMiddleware($action)
+    public function callMiddleware($action)
     {
         foreach ($this->middlewareCollection as $middleware) {
             if ($middleware instanceof MiddlewareInterface) {
