@@ -37,22 +37,28 @@ class ControllerDispatcher implements DispatcherInterface
      */
     public function call()
     {
+
+        if (!class_exists($this->router->route->getTarget('controller'))) {
+            throw new \Exception('Class not found : "' . $this->router->route->getTarget('controller') . '"');
+        }
+
         $classInstance = [
             Route::class => $this->router->route,
             Response::class => $this->router->response,
             RouteCollection::class => $this->router->collection,
         ];
-        
+
         $reflectionMethod = new ReflectionMethod($this->router->route->getTarget('controller'), $this->router->route->getTarget('action'));
         $dependencies = [];
         $count = 0;
 
         foreach ($reflectionMethod->getParameters() as $arg) {
             if (!is_null($arg->getClass())) {
-                if (isset($classInstance[$arg->getClass()->name]))
-                $dependencies[] = $classInstance[$arg->getClass()->name];
-            else
-                $dependencies[] = call_user_func_array($this->router->route->getTarget('di'), [$arg->getClass()->name]);
+                if (isset($classInstance[$arg->getClass()->name])) {
+                    $dependencies[] = $classInstance[$arg->getClass()->name];
+                } else {
+                    $dependencies[] = call_user_func_array($this->router->route->getTarget('di'), [$arg->getClass()->name]);
+                }
             } else {
                 $count++;
             }

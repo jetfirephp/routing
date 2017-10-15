@@ -39,6 +39,9 @@ class TemplateDispatcher implements DispatcherInterface
      */
     public function call()
     {
+        if (!is_file($this->router->route->getTarget('template'))) {
+            throw new \Exception('Template file not found : "' . $this->router->route->getTarget('template') . '"');
+        }
         $this->setContentType($this->router->route->getTarget('extension'));
         if (isset($this->router->route->getTarget('callback')[$this->router->route->getTarget('extension')])) {
             $this->router->response->setContent(call_user_func_array($this->router->route->getTarget('callback')[$this->router->route->getTarget('extension')], [$this->router->route]));

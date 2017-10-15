@@ -347,9 +347,6 @@ class ArrayMatcher implements MatcherInterface
             $class = (class_exists($routes[0]))
                 ? $routes[0]
                 : $this->router->collection->getRoutes()['ctrl_namespace_' . $index] . $routes[0];
-            if (!class_exists($class)) {
-                throw new \Exception('Class "' . $class . '." is not found');
-            }
             if (method_exists($class, $routes[1])) {
                 return [
                     'dispatcher' => $this->dispatcher['isController'],
@@ -389,9 +386,6 @@ class ArrayMatcher implements MatcherInterface
                         break;
                     }
                 }
-            }
-            if (is_null($target)) {
-                throw new \Exception('Template file "' . $path . '" is not found in "' . $viewDir . '"');
             }
             return [
                 'dispatcher' => $this->dispatcher['isTemplate'],
