@@ -335,11 +335,11 @@ class ArrayMatcher implements MatcherInterface
             $routes = explode('@', $callback);
             if (!isset($routes[1])) $routes[1] = 'index';
             if ($routes[1] == '{method}') {
-                $params = explode('/', preg_replace('#' . str_replace('*', '', $this->request['route']) . '#', '', $this->router->route->getUrl()));
+                $params = explode('/', trim(preg_replace('#' . rtrim(str_replace('*', '', $this->request['route']), '/') . '#', '', $this->router->route->getUrl()), '/'));
                 $routes[1] = empty($params[0]) ? 'index' : $params[0];
                 $this->request['@method'] = $routes[1];
                 array_shift($params);
-                array_merge($this->request['parameters'], $params);
+                $this->request['parameters'] = array_merge($this->request['parameters'], $params);
                 if (preg_match('/[A-Z]/', $routes[1])) return false;
                 $routes[1] = lcfirst(str_replace(' ', '', ucwords(str_replace('-', ' ', $routes[1]))));
             }
