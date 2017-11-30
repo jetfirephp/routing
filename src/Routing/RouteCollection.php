@@ -101,7 +101,7 @@ class RouteCollection
     private function setRoutes($args = [], $i)
     {
         $this->routes['block_' . $i] = (isset($args['block']) && !empty($args['block'])) ? rtrim($args['block'], '/') . '/' : '';
-        $this->routes['view_dir_' . $i] = (isset($args['view_dir']) && !empty($args['view_dir'])) ? rtrim($args['view_dir'], '/') . '/' : '';
+        $this->routes['view_dir_' . $i] = (isset($args['view_dir']) && !empty($args['view_dir'])) ? $args['view_dir'] : [];
         $this->routes['ctrl_namespace_' . $i] = (isset($args['ctrl_namespace']) && !empty($args['ctrl_namespace'])) ? trim($args['ctrl_namespace'], '\\') . '\\' : '';
         $this->routes['prefix_' . $i] = (isset($args['prefix']) && !empty($args['prefix'])) ? '/' . trim($args['prefix'], '/') : '';
         $this->routes['subdomain_' . $i] = (isset($args['subdomain'])) ? $args['subdomain'] : '';

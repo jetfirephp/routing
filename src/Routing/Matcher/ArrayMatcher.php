@@ -374,16 +374,21 @@ class ArrayMatcher implements MatcherInterface
             $path = str_replace('{template}', $replace, trim($callback, '/'));
             $extension = substr(strrchr($path, "."), 1);
             $index = isset($this->request['collection_index']) ? $this->request['collection_index'] : 0;
-            $viewDir = $this->router->collection->getRoutes('view_dir_' . $index);
+            $viewDir = is_array($viewDir = $this->router->collection->getRoutes('view_dir_' . $index)) ? $viewDir : [$viewDir];
             $target = null;
-            if (in_array('.' . $extension, $this->router->getConfig()['templateExtension']) && (is_file($fullPath = $viewDir . $path) || is_file($fullPath = $path))) {
-                $target = $fullPath;
-            } else {
-                foreach ($this->router->getConfig()['templateExtension'] as $ext) {
-                    if (is_file($fullPath = $viewDir . $path . $ext) || is_file($fullPath = $path . $ext)) {
-                        $target = $fullPath;
-                        $extension = substr(strrchr($ext, "."), 1);
-                        break;
+            if (in_array('.' . $extension, $this->router->getConfig()['templateExtension'])){
+                foreach ($viewDir as $dir) {
+                    if (is_file($fullPath = rtrim($dir, '/') . '/' . $path) || is_file($fullPath = $path)) $target = $fullPath;
+                }
+            }
+            if(is_null($target)){
+                foreach ($viewDir as $dir) {
+                    foreach ($this->router->getConfig()['templateExtension'] as $ext) {
+                        if (is_file($fullPath = rtrim($dir, '/') . '/' . $path . $ext) || is_file($fullPath = $path . $ext)) {
+                            $target = $fullPath;
+                            $extension = substr(strrchr($ext, "."), 1);
+                            break;
+                        }
                     }
                 }
             }

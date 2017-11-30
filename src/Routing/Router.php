@@ -2,10 +2,6 @@
 
 namespace JetFire\Routing;
 
-use JetFire\Routing\Matcher\ArrayMatcher;
-use ReflectionClass;
-use ReflectionMethod;
-
 /**
  * Class Router
  * @package JetFire\Routing

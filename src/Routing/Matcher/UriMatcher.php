@@ -139,14 +139,17 @@ class UriMatcher implements MatcherInterface
                 $url = explode('/', str_replace($this->router->collection->getRoutes('prefix_' . $i), '', $this->router->route->getUrl()));
                 $end = array_pop($url);
                 $url = implode('/', array_map('ucwords', $url)) . '/' . $end;
-                if (is_file(($template = rtrim($this->router->collection->getRoutes('view_dir_' . $i), '/') . $url . $extension))) {
-                    $this->request['collection_index'] = $i;
-                    return [
-                        'dispatcher' => $this->dispatcher['isTemplate'],
-                        'template' => $template,
-                        'extension' => substr(strrchr($extension, "."), 1),
-                        'callback' => $this->router->getConfig()['templateCallback']
-                    ];
+                $viewDir = is_array($viewDir = $this->router->collection->getRoutes('view_dir_' . $i)) ? $viewDir : [$viewDir];
+                foreach ($viewDir as $dir) {
+                    if (is_file(($template = rtrim($dir, '/') . $url . $extension))) {
+                        $this->request['collection_index'] = $i;
+                        return [
+                            'dispatcher' => $this->dispatcher['isTemplate'],
+                            'template' => $template,
+                            'extension' => substr(strrchr($extension, "."), 1),
+                            'callback' => $this->router->getConfig()['templateCallback']
+                        ];
+                    }
                 }
             }
         }
