@@ -48,7 +48,7 @@ class RouteCollection
             elseif (is_file($routes) && is_array($routesFile = include $routes)) $routes = $routesFile;
             else throw new \InvalidArgumentException('Argument for "' . get_called_class() . '" constructor is not recognized. Expected argument array or file containing array but "' . $routes . '" given');
         }
-        $this->routes['routes_' . $this->countRoutes] = is_array($routes) ? $routes : [];
+        $options['routes'] = is_array($routes) ? $routes : [];
         $this->setRoutes($options, $this->countRoutes);
         $this->countRoutes++;
     }
@@ -59,9 +59,9 @@ class RouteCollection
      */
     public function getRoutes($key = null)
     {
-        if (!is_null($key))
-            return isset($this->routes[$key]) ? $this->routes[$key] : '';
-        return $this->routes;
+        return (!is_null($key))
+            ? isset($this->routes[$key]) ? $this->routes[$key] : ''
+            : $this->routes;
     }
 
     /**
@@ -98,8 +98,9 @@ class RouteCollection
      * @param array $args
      * @param $i
      */
-    private function setRoutes($args = [], $i)
+    public function setRoutes($args = [], $i)
     {
+        $this->routes['routes_' . $i] = $args['routes'];
         $this->routes['block_' . $i] = (isset($args['block']) && !empty($args['block'])) ? rtrim($args['block'], '/') . '/' : '';
         $this->routes['view_dir_' . $i] = (isset($args['view_dir']) && !empty($args['view_dir'])) ? $args['view_dir'] : [];
         $this->routes['ctrl_namespace_' . $i] = (isset($args['ctrl_namespace']) && !empty($args['ctrl_namespace'])) ? trim($args['ctrl_namespace'], '\\') . '\\' : '';
