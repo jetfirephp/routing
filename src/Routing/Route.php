@@ -7,6 +7,7 @@ namespace JetFire\Routing;
  * @package JetFire\Routing
  * @method getParameters()
  * @method getBlock()
+ * @method getKeys()
  * @method getPath()
  * @method string getParams()
  */

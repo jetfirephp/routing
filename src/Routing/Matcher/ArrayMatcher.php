@@ -2,7 +2,6 @@
 
 namespace JetFire\Routing\Matcher;
 
-
 use JetFire\Routing\Dispatcher\ClosureDispatcher;
 use JetFire\Routing\Dispatcher\ControllerDispatcher;
 use JetFire\Routing\Dispatcher\TemplateDispatcher;
@@ -162,6 +161,10 @@ class ArrayMatcher implements MatcherInterface
             $this->request['params']['arguments'][$match[1]] = str_replace('(', '(?:', $this->request['params']['arguments'][$match[1]]);
             return '(' . $this->request['params']['arguments'][$match[1]] . ')';
         }
+        if(isset($this->router->collection->getRoutes('params_' . $this->request['collection_index'])['arguments'][$match[1]])){
+            $this->request['params']['arguments'][$match[1]] = str_replace('(', '(?:', $this->router->collection->getRoutes('params_' . $this->request['collection_index'])['arguments'][$match[1]]);
+            return '(' . $this->request['params']['arguments'][$match[1]] . ')';
+        }
         return '([^/]+)';
     }
 
@@ -220,9 +223,10 @@ class ArrayMatcher implements MatcherInterface
             $replacements = $this->request['parameters'];
             $keys = [];
             $this->request['@' . $key] = $this->request[$key];
-            $this->request[$key] = preg_replace_callback('#:([\w]+)#', function ($matches) use (&$replacements, &$keys) {
-                $keys[$matches[0]] = $replacements[0];
-                return array_shift($replacements);
+            $this->request[$key] = preg_replace_callback('#:([\w?]+)#', function ($matches) use (&$replacements, &$keys) {
+                $route_key = preg_replace("/[^A-Za-z0-9\\-_:]/", '', $matches[0]);
+                $keys[$route_key] = isset($replacements[0]) ? $replacements[0] : null;
+                return is_null($keys[$route_key]) ? '' : array_shift($replacements);
             }, $this->request[$key]);
             $this->request['keys'] = $keys;
             $this->request['parameters'] = $replacements;
