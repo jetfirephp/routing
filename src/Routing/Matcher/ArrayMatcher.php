@@ -97,14 +97,17 @@ class ArrayMatcher implements MatcherInterface
     {
         $this->request = [];
         for ($i = 0; $i < $this->router->collection->countRoutes; ++$i) {
-            $this->request['prefix'] = ($this->router->collection->getRoutes('prefix_' . $i) != '') ? $this->router->collection->getRoutes('prefix_' . $i) : '';
             $this->request['subdomain'] = ($this->router->collection->getRoutes('subdomain_' . $i) != '') ? $this->router->collection->getRoutes('subdomain_' . $i) : '';
+            $this->request['prefix'] = ($this->router->collection->getRoutes('prefix_' . $i) != '') ? $this->router->collection->getRoutes('prefix_' . $i) : '';
             foreach ($this->router->collection->getRoutes('routes_' . $i) as $route => $params) {
-                $this->request['params'] = $params;
-                $this->request['collection_index'] = $i;
-                if ($this->checkSubdomain($route)) {
+                if($this->checkSubDomain($route)) {
                     $route = strstr($route, '/');
-                    $this->request['route'] = preg_replace_callback('#:([\w]+)#', [$this, 'paramMatch'], '/' . trim(trim($this->request['prefix'], '/') . '/' . trim($route, '/'), '/'));
+                    $this->request['uri'] = $route;
+                    $this->request['params'] = $params;
+                    $this->request['collection_index'] = $i;
+                    $this->request['parameters_regex'] = [];
+                    $url = (empty($this->request['subdomain']) ? '' : $this->request['subdomain'] . '(?:.)?') . $this->router->server['domain'] . '/' . trim(trim($this->request['prefix'], '/') . '/' . trim($route, '/'), '/');
+                    $this->request['route'] = preg_replace_callback('#:([\w]+)|\[(.*?):([\w]+)(.*?)]#', [$this, 'paramMatch'], $url);
                     if ($this->routeMatch('#^' . $this->request['route'] . '$#')) {
                         $this->setCallback();
                         return $this->generateTarget();
@@ -119,54 +122,61 @@ class ArrayMatcher implements MatcherInterface
      * @param $route
      * @return bool
      */
-    private function checkSubdomain($route)
+    private function checkSubDomain($route)
     {
-        $url = (isset($_SERVER['REQUEST_SCHEME']) ? $_SERVER['REQUEST_SCHEME'] : 'http') . '://' . ($host = (isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : $_SERVER['HTTP_HOST']));
-        $host = explode(':', $host)[0];
-        $domain = $this->router->collection->getDomain($url);
-        if (!empty($this->request['subdomain']) && $route[0] == '/') $route = trim($this->request['subdomain'], '.') . '.' . $domain . $route;
-        if ($route[0] == '/') {
-            return ($host != $domain) ? false : true;
-        } elseif ($route[0] != '/' && $host != $domain) {
-            $route = substr($route, 0, strpos($route, "/"));
-            $route = str_replace('{host}', $domain, $route);
-            $route = preg_replace_callback('#{subdomain}#', [$this, 'subdomainMatch'], $route);
-            if (preg_match('#^' . $route . '$#', $host, $this->request['called_subdomain'])) {
-                $this->request['called_subdomain'] = array_shift($this->request['called_subdomain']);
-                $this->request['subdomain'] = str_replace('.' . $domain, '', $host);
-                return true;
+        if(strpos($route, '{subdomain}') !== false){
+            if (!empty($this->request['subdomain']) && $route[0] == '/') {
+                $route = trim($this->request['subdomain'], '.') . '.' . $this->router->server['domain'] . $route;
             }
+            if ($route[0] == '/') {
+                return ($this->router->server['host'] != $this->router->server['domain']) ? false : true;
+            } elseif ($route[0] != '/' && $this->router->server['host'] != $this->router->server['domain']) {
+                $route = substr($route, 0, strpos($route, '/'));
+                $route = str_replace('{host}', $this->router->server['domain'], $route);
+                $route = preg_replace_callback('#{subdomain}#', function(){
+                    return (is_array($this->request['params']) && isset($this->request['params']['subdomain']))
+                        ? $this->request['params']['subdomain']
+                        : '([^/]+)';
+                }, $route);
+                if (preg_match('#^' . $route . '$#', $this->router->server['host'], $this->request['called_subdomain'])) {
+                    $this->request['called_subdomain'] = array_shift($this->request['called_subdomain']);
+                    $this->request['subdomain'] = str_replace('.' . $this->router->server['domain'], '', $this->router->server['host']);
+                    return true;
+                }
+            }
+            return false;
         }
-        return false;
+        return true;
     }
 
     /**
+     * @param $matches
      * @return string
      */
-    private function subdomainMatch()
+    private function paramMatch($matches)
     {
-        if (is_array($this->request['params']) && isset($this->request['params']['subdomain'])) {
-            return '(' . $this->request['params']['subdomain'] . ')';
+        $key = (isset($matches[3])) ? 3 : 1;
+        $this->request['parameters_regex'][$matches[0]] = [
+            'key' => $matches[$key],
+            'regex' => ''
+        ];
+        if ($key == 3 && isset($matches[$key-1]) && !empty($matches[$key-1])) {
+            $this->request['parameters_regex'][$matches[0]]['regex'] .= '(?:' . $matches[$key-1] . ')?';
         }
-        return '([^/]+)';
+        if (isset($this->router->collection->getRoutes('params_' . $this->request['collection_index'])['arguments'][$matches[$key]])){
+            $param = $this->router->collection->getRoutes('params_' . $this->request['collection_index'])['arguments'][$matches[$key]];
+        } elseif (is_array($this->request['params']) && isset($this->request['params']['arguments'][$matches[$key]])) {
+            $param = $this->request['params']['arguments'][$matches[$key]];
+        } else{
+            $param = '[^/]+';
+        }
+        $this->request['parameters_regex'][$matches[0]]['regex'] .= $key == 3 ?'(' . $param . '?)' : '(' . $param . ')';
+        if ($key == 3 && isset($matches[$key+1]) && !empty($matches[$key+1])) {
+            $this->request['parameters_regex'][$matches[0]]['regex'] .= '(?(' . count($this->request['parameters_regex']) . ')' . $matches[$key+1] . ')';
+        }
+        return $this->request['parameters_regex'][$matches[0]]['regex'];
     }
 
-    /**
-     * @param $match
-     * @return string
-     */
-    private function paramMatch($match)
-    {
-        if (is_array($this->request['params']) && isset($this->request['params']['arguments'][$match[1]])) {
-            $this->request['params']['arguments'][$match[1]] = str_replace('(', '(?:', $this->request['params']['arguments'][$match[1]]);
-            return '(' . $this->request['params']['arguments'][$match[1]] . ')';
-        }
-        if(isset($this->router->collection->getRoutes('params_' . $this->request['collection_index'])['arguments'][$match[1]])){
-            $this->request['params']['arguments'][$match[1]] = str_replace('(', '(?:', $this->router->collection->getRoutes('params_' . $this->request['collection_index'])['arguments'][$match[1]]);
-            return '(' . $this->request['params']['arguments'][$match[1]] . ')';
-        }
-        return '([^/]+)';
-    }
 
     /**
      * @param $regex
@@ -188,6 +198,7 @@ class ArrayMatcher implements MatcherInterface
     private function generateTarget()
     {
         if ($this->validMethod()) {
+            $this->replaceRequest(['subdomain', 'prefix', 'uri']);
             foreach ($this->resolver as $resolver) {
                 if (is_array($target = call_user_func_array([$this, $resolver], [$this->router->route->getCallback()]))) {
                     $this->setTarget($target);
@@ -205,8 +216,6 @@ class ArrayMatcher implements MatcherInterface
     public function setTarget($target = [])
     {
         $index = isset($this->request['collection_index']) ? $this->request['collection_index'] : 0;
-        $this->checkRequest('subdomain');
-        $this->checkRequest('prefix');
         $this->router->route->setDetail($this->request);
         $this->router->route->setTarget($target);
         $this->router->route->addTarget('block', $this->router->collection->getRoutes('block_' . $index));
@@ -215,21 +224,30 @@ class ArrayMatcher implements MatcherInterface
     }
 
     /**
-     * @param $key
+     * @param $keys
      */
-    private function checkRequest($key)
+    private function replaceRequest($keys = [])
     {
-        if (strpos($this->request[$key], ':') !== false && isset($this->request['parameters'][0])) {
-            $replacements = $this->request['parameters'];
-            $keys = [];
-            $this->request['@' . $key] = $this->request[$key];
-            $this->request[$key] = preg_replace_callback('#:([\w?]+)#', function ($matches) use (&$replacements, &$keys) {
-                $route_key = preg_replace("/[^A-Za-z0-9\\-_:]/", '', $matches[0]);
-                $keys[$route_key] = isset($replacements[0]) ? $replacements[0] : null;
-                return is_null($keys[$route_key]) ? '' : array_shift($replacements);
-            }, $this->request[$key]);
-            $this->request['keys'] = $keys;
-            $this->request['parameters'] = $replacements;
+        $i = 0;
+        foreach ($this->request['parameters_regex'] as $param => $data) {
+            $this->request['parameters_regex'][$param]['value'] = isset($this->request['parameters'][$i])
+                ? $this->request['parameters'][$i] : '';
+            ++$i;
+        }
+        $this->request['parameters'] = [];
+        foreach ($keys as $key) {
+            $this->request['@' . $key] = isset($this->request['@' . $key]) ? $this->request['@' . $key] : $this->request[$key];
+            foreach ($this->request['parameters_regex'] as $param => $data) {
+                if(strpos($this->request[$key], $param) !== false) {
+                    $this->request[$key] = empty($data['value'])
+                        ? str_replace($param, '', $this->request[$key])
+                        : str_replace(':' . $data['key'], $data['value'], $this->request[$key], $replace);
+                    if ($key == 'uri' && strpos($this->request['@uri'], $param) !== false) {
+                        $this->request['parameters'][] = $this->request['parameters_regex'][$param]['value'];
+                    }
+                }
+            }
+            $this->request[$key] = str_replace(['[', ']'], '', $this->request[$key]);
         }
     }
 
@@ -339,7 +357,8 @@ class ArrayMatcher implements MatcherInterface
             $routes = explode('@', $callback);
             if (!isset($routes[1])) $routes[1] = 'index';
             if ($routes[1] == '{method}') {
-                $params = explode('/', trim(preg_replace('#' . rtrim(str_replace('*', '', $this->request['route']), '/') . '#', '', $this->router->route->getUrl()), '/'));
+                $replace = (empty($this->request['subdomain']) ? '' : $this->request['subdomain'] . '.') . $this->router->server['domain'] . $this->request['prefix'] . str_replace('*', '', $this->request['uri']);
+                $params = explode('/', str_replace(rtrim($replace, '/'), '', $this->router->route->getUrl()));
                 $routes[1] = empty($params[0]) ? 'index' : $params[0];
                 $this->request['@method'] = $routes[1];
                 array_shift($params);

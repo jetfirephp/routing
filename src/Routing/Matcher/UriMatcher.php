@@ -136,7 +136,7 @@ class UriMatcher implements MatcherInterface
     {
         foreach ($this->router->getConfig()['templateExtension'] as $extension) {
             for ($i = 0; $i < $this->router->collection->countRoutes; ++$i) {
-                $url = explode('/', str_replace($this->router->collection->getRoutes('prefix_' . $i), '', $this->router->route->getUrl()));
+                $url = explode('/', str_replace($this->router->collection->getRoutes('prefix_' . $i), '', $this->router->server['uri']));
                 $end = array_pop($url);
                 $url = implode('/', array_map('ucwords', $url)) . '/' . $end;
                 $viewDir = is_array($viewDir = $this->router->collection->getRoutes('view_dir_' . $i)) ? $viewDir : [$viewDir];
@@ -161,7 +161,7 @@ class UriMatcher implements MatcherInterface
      */
     public function isController()
     {
-        $routes = array_slice(explode('/', $this->router->route->getUrl()), 1);
+        $routes = array_slice(explode('/', $this->router->server['uri']), 1);
         $i = 0;
         do {
             $route = ('/' . $routes[0] == $this->router->collection->getRoutes('prefix_' . $i)) ? array_slice($routes, 1) : $routes;

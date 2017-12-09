@@ -44,6 +44,11 @@ class Router
     ];
 
     /**
+     * @var array
+     */
+    public $server = [];
+
+    /**
      * @param RouteCollection $collection
      * @param ResponseInterface $response
      * @param Route $route
@@ -151,9 +156,14 @@ class Router
      */
     public function setUrl($url = null)
     {
-        if (is_null($url))
-            $url = (isset($_GET['url'])) ? $_GET['url'] : substr(str_replace(str_replace('/index.php', '', $_SERVER['SCRIPT_NAME']), '', $_SERVER['REQUEST_URI']), 1);
-        $this->route->setUrl('/' . trim(explode('?', $url)[0], '/'));
+        $url = (is_null($url))
+            ? (isset($_GET['url'])) ? $_GET['url'] : substr(str_replace(str_replace('/index.php', '', $_SERVER['SCRIPT_NAME']), '', $_SERVER['REQUEST_URI']), 1)
+            : $url;
+        $this->server['http_host'] = ($this->server['protocol'] = isset($_SERVER['REQUEST_SCHEME']) ? $_SERVER['REQUEST_SCHEME'] : 'http') . '://' . ($host = (isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : $_SERVER['HTTP_HOST']));
+        $this->server['host'] = explode(':', $host)[0];
+        $this->server['domain'] = $this->collection->getDomain($this->server['http_host']);
+        $this->server['uri'] = '/' . trim(explode('?', $url)[0], '/');
+        $this->route->setUrl($this->server['host'] . $this->server['uri']);
     }
 
     /**

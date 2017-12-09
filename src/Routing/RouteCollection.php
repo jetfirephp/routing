@@ -71,11 +71,14 @@ class RouteCollection
     {
         if (is_array($args)) {
             $nbrArgs = count($args);
-            for ($i = 0; $i < $nbrArgs; ++$i)
+            for ($i = 0; $i < $nbrArgs; ++$i) {
                 $this->routes['prefix_' . $i] = '/' . trim($args[$i], '/');
-        } elseif (is_string($args))
-            for ($i = 0; $i < $this->countRoutes; ++$i)
+            }
+        } elseif (is_string($args)) {
+            for ($i = 0; $i < $this->countRoutes; ++$i) {
                 $this->routes['prefix_' . $i] = '/' . trim($args, '/');
+            }
+        }
         if ($this->countRoutes == 0) $this->countRoutes++;
     }
 
@@ -102,7 +105,7 @@ class RouteCollection
     {
         $this->routes['routes_' . $i] = $args['routes'];
         $this->routes['block_' . $i] = (isset($args['block']) && !empty($args['block'])) ? rtrim($args['block'], '/') . '/' : '';
-        $this->routes['view_dir_' . $i] = (isset($args['view_dir']) && !empty($args['view_dir'])) ? $args['view_dir'] : [];
+        $this->routes['view_dir_' . $i] = (isset($args['view_dir']) && !empty($args['view_dir'])) ? $args['view_dir'] : '';
         $this->routes['ctrl_namespace_' . $i] = (isset($args['ctrl_namespace']) && !empty($args['ctrl_namespace'])) ? trim($args['ctrl_namespace'], '\\') . '\\' : '';
         $this->routes['prefix_' . $i] = (isset($args['prefix']) && !empty($args['prefix'])) ? '/' . trim($args['prefix'], '/') : '';
         $this->routes['subdomain_' . $i] = (isset($args['subdomain'])) ? $args['subdomain'] : '';
@@ -172,10 +175,9 @@ class RouteCollection
     {
         $url = parse_url($url);
         $domain = $url['host'];
-        if (preg_match('/(?P<domain>[a-z0-9][a-z0-9\-]{1,63}\.[a-z\.]{2,6})$/i', $domain, $regs)) {
-            return $regs['domain'];
-        }
-        return $domain;
+        return (preg_match('/(?P<domain>[a-z0-9][a-z0-9\-]{1,63}\.[a-z\.]{2,6})$/i', $domain, $regs))
+            ? $regs['domain']
+            : $domain;
     }
 
     /**
