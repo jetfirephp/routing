@@ -191,7 +191,7 @@ class RouteCollection
             $param = explode('#', $key);
             if(isset($params['{subdomain}'])) $route = str_replace('*', $params['{subdomain}'], $route);
             if(isset($params['{method}'])) $route = str_replace('*', $params['{method}'], $route);
-            foreach ($params as $key2 => $value) $route = str_replace(':' . $key2, $value, $route);
+            foreach ($params as $key2 => $value) $route = str_replace($key2, $value, $route);
             if ($param[0] == trim($name, '/')) return $route;
             else if (isset($param[1]) && $param[1] == $name) return $route;
         }

@@ -158,6 +158,7 @@ class ArrayMatcher implements MatcherInterface
         $key = (isset($matches[3])) ? 3 : 1;
         $this->request['parameters_regex'][$matches[0]] = [
             'key' => $matches[$key],
+            'optional' => isset($matches[3]),
             'regex' => ''
         ];
         if ($key == 3 && isset($matches[$key-1]) && !empty($matches[$key-1])) {

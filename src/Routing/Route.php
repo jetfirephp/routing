@@ -150,8 +150,9 @@ class Route
      */
     public function getTarget($key = null)
     {
-        if (!is_null($key))
+        if (!is_null($key)) {
             return isset($this->target[$key]) ? $this->target[$key] : '';
+        }
         return empty($this->target) ? '' : $this->target;
     }
 
@@ -178,8 +179,9 @@ class Route
      */
     public function hasTarget($key = null)
     {
-        if (!is_null($key))
+        if (!is_null($key)) {
             return isset($this->target[$key]) ? true : false;
+        }
         return empty($this->target) ? false : true;
     }
 

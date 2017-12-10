@@ -190,4 +190,39 @@ class Router
             }
         }
     }
+
+    /**
+     * @param null $name
+     * @param array $params
+     * @return mixed
+     */
+    public function getRoutePath($name, $params = [])
+    {
+        foreach ($this->route->getDetail()['keys'] as $key => $data){
+            if(!isset($params[$data['key']]) && $data['required']){
+                $params[$data['key']] = $data['value'];
+            }
+            if(!$data['required']){
+                if(isset($params[$data['key']])){
+                    if(!empty($params[$data['key']])) {
+                        $params[$key] = strtr($key, [':' . $data['key'] => $params[$data['key']], '[' => '', ']' => '']);
+                    }
+                    unset($params[$data['key']]);
+                }else {
+                    if(!empty($data['value'])) {
+                        $params[$key] = strtr($key, [':' . $data['key'] => $data['value'], '[' => '', ']' => '']);
+                    }else{
+                        $params[$key] = '';
+                    }
+                }
+            }
+        }
+        foreach ($params as $key => $param){
+            if($key[0] != '['){
+                $params[':' . $key] = $param;
+                unset($params[$key]);
+            }
+        }
+        return $this->collection->getRoutePath($name, $params);
+    }
 }
