@@ -358,8 +358,10 @@ class ArrayMatcher implements MatcherInterface
             $routes = explode('@', $callback);
             if (!isset($routes[1])) $routes[1] = 'index';
             if ($routes[1] == '{method}') {
-                $replace = (empty($this->request['subdomain']) ? '' : $this->request['subdomain'] . '.') . $this->router->server['domain'] . $this->request['prefix'] . str_replace('*', '', $this->request['uri']);
-                $params = explode('/', str_replace(rtrim($replace, '/'), '', $this->router->route->getUrl()));
+                $replace = (empty($this->request['subdomain']) ? '' : $this->request['subdomain'] . '.') . $this->router->server['domain'] . $this->request['prefix'];
+                $this->request['uri'] = trim(str_replace($replace, '', $this->router->route->getUrl()), '/');
+                $params = explode('/', str_replace(rtrim($replace  . str_replace('*', '', $this->request['uri']), '/'), '', $this->router->route->getUrl()));
+                array_shift($params);
                 $routes[1] = empty($params[0]) ? 'index' : $params[0];
                 $this->request['@method'] = $routes[1];
                 array_shift($params);
