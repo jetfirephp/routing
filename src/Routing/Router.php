@@ -2,6 +2,10 @@
 
 namespace JetFire\Routing;
 
+use JetFire\Routing\Matcher\ArrayMatcher;
+use ReflectionClass;
+use ReflectionMethod;
+
 /**
  * Class Router
  * @package JetFire\Routing
@@ -43,9 +47,6 @@ class Router
         'generateRoutesPath' => false,
     ];
 
-    /**
-     * @var array
-     */
     public $server = [];
 
     /**
@@ -162,8 +163,8 @@ class Router
         $this->server['http_host'] = ($this->server['protocol'] = isset($_SERVER['REQUEST_SCHEME']) ? $_SERVER['REQUEST_SCHEME'] : 'http') . '://' . ($host = (isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : $_SERVER['HTTP_HOST']));
         $this->server['host'] = explode(':', $host)[0];
         $this->server['domain'] = $this->collection->getDomain($this->server['http_host']);
-        $this->server['uri'] = '/' . trim(explode('?', $url)[0], '/');
-        $this->route->setUrl($this->server['host'] . $this->server['uri']);
+        $this->server['uri'] = trim(explode('?', $url)[0], '/');
+        $this->route->setUrl($this->server['host'] . '/' . $this->server['uri']);
     }
 
     /**

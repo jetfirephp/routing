@@ -105,7 +105,7 @@ class ArrayMatcher implements MatcherInterface
                     $this->request['uri'] = $route;
                     $this->request['params'] = $params;
                     $this->request['collection_index'] = $i;
-                    $this->request['parameters_regex'] = [];
+                    $this->request['keys'] = [];
                     $url = (empty($this->request['subdomain']) ? '' : $this->request['subdomain'] . '(?:.)?') . $this->router->server['domain'] . '/' . trim(trim($this->request['prefix'], '/') . '/' . trim($route, '/'), '/');
                     $this->request['route'] = preg_replace_callback('#:([\w]+)|\[(.*?):([\w]+)(.*?)]#', [$this, 'paramMatch'], $url);
                     if ($this->routeMatch('#^' . $this->request['route'] . '$#')) {
@@ -156,13 +156,13 @@ class ArrayMatcher implements MatcherInterface
     private function paramMatch($matches)
     {
         $key = (isset($matches[3])) ? 3 : 1;
-        $this->request['parameters_regex'][$matches[0]] = [
+        $this->request['keys'][$matches[0]] = [
             'key' => $matches[$key],
-            'optional' => isset($matches[3]),
+            'required' => ($key == 1),
             'regex' => ''
         ];
         if ($key == 3 && isset($matches[$key-1]) && !empty($matches[$key-1])) {
-            $this->request['parameters_regex'][$matches[0]]['regex'] .= '(?:' . $matches[$key-1] . ')?';
+            $this->request['keys'][$matches[0]]['regex'] .= '(?:' . $matches[$key-1] . ')?';
         }
         if (isset($this->router->collection->getRoutes('params_' . $this->request['collection_index'])['arguments'][$matches[$key]])){
             $param = $this->router->collection->getRoutes('params_' . $this->request['collection_index'])['arguments'][$matches[$key]];
@@ -171,11 +171,11 @@ class ArrayMatcher implements MatcherInterface
         } else{
             $param = '[^/]+';
         }
-        $this->request['parameters_regex'][$matches[0]]['regex'] .= $key == 3 ?'(' . $param . '?)' : '(' . $param . ')';
+        $this->request['keys'][$matches[0]]['regex'] .= $key == 3 ?'(' . $param . '?)' : '(' . $param . ')';
         if ($key == 3 && isset($matches[$key+1]) && !empty($matches[$key+1])) {
-            $this->request['parameters_regex'][$matches[0]]['regex'] .= '(?(' . count($this->request['parameters_regex']) . ')' . $matches[$key+1] . ')';
+            $this->request['keys'][$matches[0]]['regex'] .= '(?(' . count($this->request['keys']) . ')' . $matches[$key+1] . ')';
         }
-        return $this->request['parameters_regex'][$matches[0]]['regex'];
+        return $this->request['keys'][$matches[0]]['regex'];
     }
 
 
@@ -230,21 +230,21 @@ class ArrayMatcher implements MatcherInterface
     private function replaceRequest($keys = [])
     {
         $i = 0;
-        foreach ($this->request['parameters_regex'] as $param => $data) {
-            $this->request['parameters_regex'][$param]['value'] = isset($this->request['parameters'][$i])
+        foreach ($this->request['keys'] as $param => $data) {
+            $this->request['keys'][$param]['value'] = isset($this->request['parameters'][$i])
                 ? $this->request['parameters'][$i] : '';
             ++$i;
         }
         $this->request['parameters'] = [];
         foreach ($keys as $key) {
             $this->request['@' . $key] = isset($this->request['@' . $key]) ? $this->request['@' . $key] : $this->request[$key];
-            foreach ($this->request['parameters_regex'] as $param => $data) {
+            foreach ($this->request['keys'] as $param => $data) {
                 if(strpos($this->request[$key], $param) !== false) {
                     $this->request[$key] = empty($data['value'])
                         ? str_replace($param, '', $this->request[$key])
                         : str_replace(':' . $data['key'], $data['value'], $this->request[$key], $replace);
                     if ($key == 'uri' && strpos($this->request['@uri'], $param) !== false) {
-                        $this->request['parameters'][] = $this->request['parameters_regex'][$param]['value'];
+                        $this->request['parameters'][] = $this->request['keys'][$param]['value'];
                     }
                 }
             }
@@ -359,7 +359,7 @@ class ArrayMatcher implements MatcherInterface
             if (!isset($routes[1])) $routes[1] = 'index';
             if ($routes[1] == '{method}') {
                 $replace = (empty($this->request['subdomain']) ? '' : $this->request['subdomain'] . '.') . $this->router->server['domain'] . $this->request['prefix'];
-                $this->request['uri'] = trim(str_replace($replace, '', $this->router->route->getUrl()), '/');
+                $this->request['uri'] = str_replace($replace, '', $this->router->route->getUrl());
                 $params = explode('/', str_replace(rtrim($replace  . str_replace('*', '', $this->request['uri']), '/'), '', $this->router->route->getUrl()));
                 array_shift($params);
                 $routes[1] = empty($params[0]) ? 'index' : $params[0];
