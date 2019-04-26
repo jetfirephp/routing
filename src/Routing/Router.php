@@ -2,10 +2,6 @@
 
 namespace JetFire\Routing;
 
-use JetFire\Routing\Matcher\ArrayMatcher;
-use ReflectionClass;
-use ReflectionMethod;
-
 /**
  * Class Router
  * @package JetFire\Routing
@@ -47,6 +43,9 @@ class Router
         'generateRoutesPath' => false,
     ];
 
+    /**
+     * @var array
+     */
     public $server = [];
 
     /**
@@ -57,9 +56,9 @@ class Router
     public function __construct(RouteCollection $collection, ResponseInterface $response = null, Route $route = null)
     {
         $this->collection = $collection;
-        $this->response = is_null($response) ? new Response() : $response;
-        $this->route = is_null($route) ? new Route() : $route;
-        $this->config['di'] = function ($class) {
+        $this->response = $response === null ? new Response() : $response;
+        $this->route = $route === null ? new Route() : $route;
+        $this->config['di'] = static function ($class) {
             return new $class;
         };
     }
@@ -122,13 +121,15 @@ class Router
     public function run()
     {
         $this->setUrl();
-        if ($this->config['generateRoutesPath']) $this->collection->generateRoutesPath();
+        if ($this->config['generateRoutesPath']) {
+            $this->collection->generateRoutesPath();
+        }
         if ($this->match() === true) {
             $this->callMiddleware('before');
-            if (!in_array(substr($this->response->getStatusCode(), 0, 1), [3,4,5])) {
+            if (!in_array(substr($this->response->getStatusCode(), 0, 1), [3, 4, 5], true)) {
                 $this->callTarget();
             }
-        }else{
+        } else {
             $this->response->setStatusCode(404);
         }
         $this->callMiddleware('after');
@@ -145,7 +146,7 @@ class Router
             if ($middleware instanceof MiddlewareInterface) {
                 foreach ($middleware->getCallbacks($action) as $callback) {
                     if (method_exists($middleware, $callback)) {
-                        call_user_func_array([$middleware, $callback], [$action]);
+                        $middleware->$callback($action);
                     }
                 }
             }
@@ -157,9 +158,9 @@ class Router
      */
     public function setUrl($url = null)
     {
-        $url = (is_null($url))
-            ? (isset($_GET['url'])) ? $_GET['url'] : substr(str_replace(str_replace('/index.php', '', $_SERVER['SCRIPT_NAME']), '', $_SERVER['REQUEST_URI']), 1)
-            : $url;
+        if ($url === null) {
+            $url = (isset($_GET['url']) ? $_GET['url'] : substr(str_replace(str_replace('/index.php', '', $_SERVER['SCRIPT_NAME']), '', $_SERVER['REQUEST_URI']), 1));
+        }
         $this->server['http_host'] = ($this->server['protocol'] = isset($_SERVER['REQUEST_SCHEME']) ? $_SERVER['REQUEST_SCHEME'] : 'http') . '://' . ($host = (isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : $_SERVER['HTTP_HOST']));
         $this->server['host'] = explode(':', $host)[0];
         $this->server['domain'] = $this->collection->getDomain($this->server['http_host']);
@@ -173,7 +174,9 @@ class Router
     public function match()
     {
         foreach ($this->matcher as $key => $matcher) {
-            if (call_user_func([$this->matcher[$key], 'match'])) return true;
+            if (call_user_func([$this->matcher[$key], 'match'])) {
+                return true;
+            }
         }
         return false;
     }
@@ -199,27 +202,25 @@ class Router
      */
     public function getRoutePath($name, $params = [])
     {
-        foreach ($this->route->getDetail()['keys'] as $key => $data){
-            if(!isset($params[$data['key']]) && $data['required']){
+        foreach ($this->route->getDetail()['keys'] as $key => $data) {
+            if (!isset($params[$data['key']]) && $data['required']) {
                 $params[$data['key']] = $data['value'];
             }
-            if(!$data['required']){
-                if(isset($params[$data['key']])){
-                    if(!empty($params[$data['key']])) {
+            if (!$data['required']) {
+                if (isset($params[$data['key']])) {
+                    if (!empty($params[$data['key']])) {
                         $params[$key] = strtr($key, [':' . $data['key'] => $params[$data['key']], '[' => '', ']' => '']);
                     }
                     unset($params[$data['key']]);
-                }else {
-                    if(!empty($data['value'])) {
-                        $params[$key] = strtr($key, [':' . $data['key'] => $data['value'], '[' => '', ']' => '']);
-                    }else{
-                        $params[$key] = '';
-                    }
+                } else if (!empty($data['value'])) {
+                    $params[$key] = strtr($key, [':' . $data['key'] => $data['value'], '[' => '', ']' => '']);
+                } else {
+                    $params[$key] = '';
                 }
             }
         }
-        foreach ($params as $key => $param){
-            if($key[0] != '['){
+        foreach ($params as $key => $param) {
+            if ($key[0] !== '[') {
                 $params[':' . $key] = $param;
                 unset($params[$key]);
             }

@@ -43,8 +43,8 @@ class Route
      */
     public function __construct()
     {
-        $this->method = (isset($_SERVER['REQUEST_METHOD'])) ? $_SERVER['REQUEST_METHOD'] : 'GET';
-        if ($this->method == 'POST' && isset($_SERVER['X-HTTP-METHOD-OVERRIDE'])) {
+        $this->method = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET';
+        if ($this->method === 'POST' && isset($_SERVER['X-HTTP-METHOD-OVERRIDE'])) {
             $this->method = strtoupper($_SERVER['X-HTTP-METHOD-OVERRIDE']);
         }
         if (isset($_POST['_METHOD']) && in_array($_POST['_METHOD'], array('PUT', 'PATCH', 'HEAD', 'DELETE'))) {
@@ -57,10 +57,18 @@ class Route
      */
     public function set($args = [])
     {
-        if (isset($args['name'])) $this->name = $args['name'];
-        if (isset($args['callback'])) $this->callback = $args['callback'];
-        if (isset($args['target'])) $this->target = $args['target'];
-        if (isset($args['detail'])) $this->detail = $args['detail'];
+        if (isset($args['name'])) {
+            $this->name = $args['name'];
+        }
+        if (isset($args['callback'])) {
+            $this->callback = $args['callback'];
+        }
+        if (isset($args['target'])) {
+            $this->target = $args['target'];
+        }
+        if (isset($args['detail'])) {
+            $this->detail = $args['detail'];
+        }
     }
 
     /**
@@ -150,7 +158,7 @@ class Route
      */
     public function getTarget($key = null)
     {
-        if (!is_null($key)) {
+        if ($key !== null) {
             return isset($this->target[$key]) ? $this->target[$key] : '';
         }
         return empty($this->target) ? '' : $this->target;
@@ -179,7 +187,7 @@ class Route
      */
     public function hasTarget($key = null)
     {
-        if (!is_null($key)) {
+        if ($key !== null) {
             return isset($this->target[$key]) ? true : false;
         }
         return empty($this->target) ? false : true;
@@ -200,10 +208,12 @@ class Route
      */
     public function __call($name, $arguments)
     {
-        if (substr($name, 0, 3) === "get") {
+        if (strpos($name, 'get') === 0) {
             $key = strtolower(str_replace('get', '', $name));
             return isset($this->detail[$key]) ? $this->detail[$key] : '';
-        } elseif (substr($name, 0, 3) === "set") {
+        }
+
+        if (strpos($name, 'set') === 0) {
             $key = strtolower(str_replace('set', '', $name));
             $this->detail[$key] = $arguments[0];
         }

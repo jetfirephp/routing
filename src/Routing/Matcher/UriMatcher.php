@@ -92,7 +92,7 @@ class UriMatcher implements MatcherInterface
     public function match()
     {
         foreach ($this->resolver as $resolver) {
-            if (is_array($target = call_user_func([$this, $resolver]))) {
+            if (is_array($target = $this->$resolver())) {
                 $this->setTarget($target);
                 return true;
             }
@@ -136,18 +136,18 @@ class UriMatcher implements MatcherInterface
     {
         foreach ($this->router->getConfig()['templateExtension'] as $extension) {
             for ($i = 0; $i < $this->router->collection->countRoutes; ++$i) {
-                $url = explode('/', str_replace($this->router->collection->getRoutes('prefix_' . $i), '', $this->router->route->getUrl()));
+                $url = explode('/', str_replace($this->router->collection->getRoutes('prefix_' . $i), '', '/' . $this->router->server['uri']));
                 $end = array_pop($url);
                 $url = implode('/', array_map('ucwords', $url)) . '/' . $end;
                 $viewDir = $this->router->collection->getRoutes('view_dir_' . $i);
                 $viewDir = is_array($viewDir) ? $viewDir : [$viewDir];
                 foreach ($viewDir as $dir) {
-                    if (is_file(($template = rtrim($dir, '/') . $url . $extension))) {
+                    if (is_file($template = rtrim($dir, '/') . $url . $extension)) {
                         $this->request['collection_index'] = $i;
                         return [
                             'dispatcher' => $this->dispatcher['isTemplate'],
                             'template' => $template,
-                            'extension' => substr(strrchr($extension, "."), 1),
+                            'extension' => substr(strrchr($extension, '.'), 1),
                             'callback' => $this->router->getConfig()['templateCallback']
                         ];
                     }
@@ -166,9 +166,9 @@ class UriMatcher implements MatcherInterface
         $routes = array_slice(explode('/', $this->router->route->getUrl()), 1);
         $i = 0;
         do {
-            $route = ('/' . $routes[0] == $this->router->collection->getRoutes('prefix_' . $i)) ? array_slice($routes, 1) : $routes;
+            $route = ('/' . $routes[0] === $this->router->collection->getRoutes('prefix_' . $i)) ? array_slice($routes, 1) : $routes;
             if (isset($route[0])) {
-                $class = (class_exists($this->router->collection->getRoutes('ctrl_namespace_' . $i) . ucfirst($route[0]) . 'Controller'))
+                $class = class_exists($this->router->collection->getRoutes('ctrl_namespace_' . $i) . ucfirst($route[0]) . 'Controller')
                     ? $this->router->collection->getRoutes('ctrl_namespace_' . $i) . ucfirst($route[0]) . 'Controller'
                     : ucfirst($route[0]) . 'Controller';
                 $route[1] = isset($route[1]) ? $route[1] : 'index';

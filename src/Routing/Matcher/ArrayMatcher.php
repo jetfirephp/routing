@@ -402,12 +402,12 @@ class ArrayMatcher implements MatcherInterface
             $index = isset($this->request['collection_index']) ? $this->request['collection_index'] : 0;
             $viewDir = is_array($viewDir = $this->router->collection->getRoutes('view_dir_' . $index)) ? $viewDir : [$viewDir];
             $target = null;
-            if (in_array('.' . $extension, $this->router->getConfig()['templateExtension'])){
+            if (in_array('.' . $extension, $this->router->getConfig()['templateExtension'], true)){
                 foreach ($viewDir as $dir) {
                     if (is_file($fullPath = rtrim($dir, '/') . '/' . $path) || is_file($fullPath = $path)) $target = $fullPath;
                 }
             }
-            if(is_null($target)){
+            if($target === null){
                 foreach ($viewDir as $dir) {
                     foreach ($this->router->getConfig()['templateExtension'] as $ext) {
                         if (is_file($fullPath = rtrim($dir, '/') . '/' . $path . $ext) || is_file($fullPath = $path . $ext)) {

@@ -7,7 +7,8 @@ namespace JetFire\Routing;
  * Class Response
  * @package JetFire\Routing
  */
-class Response implements ResponseInterface{
+class Response implements ResponseInterface
+{
 
     /**
      * @var array
@@ -116,7 +117,7 @@ class Response implements ResponseInterface{
      * Constructor.
      *
      * @param mixed $content The response content, see setContent()
-     * @param int   $status  The response status code
+     * @param int $status The response status code
      * @param array $headers An array of response headers
      *
      * @throws \InvalidArgumentException When the HTTP status code is not valid
@@ -144,8 +145,8 @@ class Response implements ResponseInterface{
     public function __toString()
     {
         return
-            sprintf('HTTP/%s %s %s', $this->version, $this->statusCode, $this->statusText)."\r\n".
-            $this->headers."\r\n".
+            sprintf('HTTP/%s %s %s', $this->version, $this->statusCode, $this->statusText) . "\r\n" .
+            $this->headers . "\r\n" .
             $this->getContent();
     }
 
@@ -166,8 +167,9 @@ class Response implements ResponseInterface{
      */
     public function sendHeaders()
     {
-        foreach($this->headers as $key => $content)
-            header($key.' : '.$content);
+        foreach ($this->headers as $key => $content) {
+            header($key . ' : ' . $content);
+        }
         http_response_code($this->getStatusCode());
         return $this;
     }
@@ -196,6 +198,7 @@ class Response implements ResponseInterface{
     {
         $this->headers = $headers;
     }
+
     /**
      * Sets the response content.
      *
@@ -213,7 +216,7 @@ class Response implements ResponseInterface{
             throw new \UnexpectedValueException(sprintf('The Response content must be a string or object implementing __toString(), "%s" given.', gettype($content)));
         }
 
-        $this->content = (string) $content;
+        $this->content = (string)$content;
 
         return $this;
     }
@@ -255,7 +258,7 @@ class Response implements ResponseInterface{
     /**
      * Sets the response status code.
      *
-     * @param int   $code HTTP status code
+     * @param int $code HTTP status code
      * @param mixed $text HTTP status text
      *
      * If the status text is null it will be automatically populated for the known
@@ -267,7 +270,7 @@ class Response implements ResponseInterface{
      */
     public function setStatusCode($code, $text = null)
     {
-        $this->statusCode = $code = (int) $code;
+        $this->statusCode = $code = (int)$code;
         if ($this->isInvalid()) {
             throw new \InvalidArgumentException(sprintf('The HTTP status code "%s" is not valid.', $code));
         }
@@ -325,6 +328,7 @@ class Response implements ResponseInterface{
 
 
     // http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
+
     /**
      * Is response invalid?
      *
@@ -424,7 +428,7 @@ class Response implements ResponseInterface{
      */
     public function isRedirect($location = null)
     {
-        return in_array($this->statusCode, array(201, 301, 302, 303, 307, 308)) && (null === $location ?: $location == $this->headers->get('Location'));
+        return in_array($this->statusCode, array(201, 301, 302, 303, 307, 308), true) && (null === $location ?: $location == $this->headers->get('Location'));
     }
 
     /**
@@ -434,7 +438,7 @@ class Response implements ResponseInterface{
      */
     public function isEmpty()
     {
-        return in_array($this->statusCode, array(204, 304));
+        return in_array($this->statusCode, array(204, 304), true);
     }
 
 }

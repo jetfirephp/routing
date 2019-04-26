@@ -40,16 +40,20 @@ class TemplateDispatcher implements DispatcherInterface
     public function call()
     {
         if (!is_file($this->router->route->getTarget('template'))) {
-            throw new \Exception('Template file not found : "' . $this->router->route->getTarget('template') . '"');
+            throw new \RuntimeException('Template file not found : "' . $this->router->route->getTarget('template') . '"');
         }
         $this->setContentType($this->router->route->getTarget('extension'));
         if (isset($this->router->route->getTarget('callback')[$this->router->route->getTarget('extension')])) {
-            $this->router->response->setContent(call_user_func_array($this->router->route->getTarget('callback')[$this->router->route->getTarget('extension')], [$this->router->route]));
+            $this->router->response->setContent(call_user_func($this->router->route->getTarget('callback')[$this->router->route->getTarget('extension')], $this->router->route));
         } else {
             ob_start();
-            if (isset($this->router->route->getTarget()['data'])) extract($this->router->route->getTarget('data'));
-            if (isset($this->router->route->getParams()['data'])) extract($this->router->route->getParams()['data']);
-            require($this->router->route->getTarget('template'));
+            if (isset($this->router->route->getTarget()['data'])) {
+                extract($this->router->route->getTarget('data'), EXTR_OVERWRITE);
+            }
+            if (isset($this->router->route->getParams()['data'])) {
+                extract($this->router->route->getParams()['data'], EXTR_OVERWRITE);
+            }
+            require $this->router->route->getTarget('template');
             $this->router->response->setContent(ob_get_clean());
         }
     }

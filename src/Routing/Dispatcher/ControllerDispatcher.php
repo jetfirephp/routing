@@ -39,7 +39,7 @@ class ControllerDispatcher implements DispatcherInterface
     {
 
         if (!class_exists($this->router->route->getTarget('controller'))) {
-            throw new \Exception('Class not found : "' . $this->router->route->getTarget('controller') . '"');
+            throw new \RuntimeException('Class not found : "' . $this->router->route->getTarget('controller') . '"');
         }
 
         $classInstance = [
@@ -53,19 +53,19 @@ class ControllerDispatcher implements DispatcherInterface
         $count = 0;
 
         foreach ($reflectionMethod->getParameters() as $arg) {
-            if (!is_null($arg->getClass())) {
+            if ($arg->getClass() !== null) {
                 if (isset($classInstance[$arg->getClass()->name])) {
                     $dependencies[] = $classInstance[$arg->getClass()->name];
                 } else {
-                    $dependencies[] = call_user_func_array($this->router->route->getTarget('di'), [$arg->getClass()->name]);
+                    $dependencies[] = call_user_func($this->router->route->getTarget('di'), $arg->getClass()->name);
                 }
             } else {
                 $count++;
             }
         }
 
-        if ($count == count($this->router->route->getParameters()) || ($this->router->route->getParameters() == '' && $count == 0)) {
-            $dependencies = array_merge($dependencies, ($this->router->route->getParameters() == '') ? [] : $this->router->route->getParameters());
+        if (($this->router->route->getParameters() === '' && $count === 0) || $count === count($this->router->route->getParameters())) {
+            $dependencies = array_merge($dependencies, ($this->router->route->getParameters() === '') ? [] : $this->router->route->getParameters());
             $content = $reflectionMethod->invokeArgs($this->getController($classInstance), $dependencies);
             if ($content instanceof ResponseInterface) {
                 $this->router->response = $content;
@@ -92,12 +92,12 @@ class ControllerDispatcher implements DispatcherInterface
     {
         $reflector = new ReflectionClass($this->router->route->getTarget('controller'));
         if (!$reflector->isInstantiable()) {
-            throw new \Exception('Target [' . $this->router->route->getTarget('controller') . '] is not instantiable.');
+            throw new \RuntimeException('Target [' . $this->router->route->getTarget('controller') . '] is not instantiable.');
         }
         $constructor = $reflector->getConstructor();
-        if (is_null($constructor)) {
+        if ($constructor === null) {
             $class = $this->router->route->getTarget('controller');
-            return call_user_func_array($this->router->route->getTarget('di'), [$class]);
+            return call_user_func($this->router->route->getTarget('di'), $class);
         }
         $dependencies = [];
         foreach ($constructor->getParameters() as $dep) {
@@ -105,7 +105,7 @@ class ControllerDispatcher implements DispatcherInterface
             if (isset($classInstance[$class])) {
                 $dependencies[] = $classInstance[$class];
             } else {
-                $dependencies[] = call_user_func_array($this->router->route->getTarget('di'), [$class]);
+                $dependencies[] = call_user_func($this->router->route->getTarget('di'), $class);
             }
         }
         return $reflector->newInstanceArgs($dependencies);

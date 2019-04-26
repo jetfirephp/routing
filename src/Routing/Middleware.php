@@ -82,16 +82,17 @@ class Middleware implements MiddlewareInterface
 
     /**
      * @param $action
-     * @return Router
+     * @return array
      */
     public function getCallbacks($action)
     {
-        return $action == 'after' ? array_reverse($this->callbacks) : $this->callbacks;
+        return $action === 'after' ? array_reverse($this->callbacks) : $this->callbacks;
     }
 
     /**
      * @description global middleware
      * @param $action
+     * @throws \ReflectionException
      */
     public function globalMiddleware($action)
     {
@@ -103,20 +104,20 @@ class Middleware implements MiddlewareInterface
     /**
      * @description block middleware
      * @param $action
+     * @throws \ReflectionException
      */
     public function blockMiddleware($action)
     {
-        if (isset($this->middleware[$action]['block_middleware'])) {
-            if (isset($this->middleware[$action]['block_middleware'][$this->router->route->getTarget('block')])) {
-                $blocks = $this->middleware[$action]['block_middleware'][$this->router->route->getTarget('block')];
-                $this->callHandlers($blocks);
-            }
+        if (isset($this->middleware[$action]['block_middleware'][$this->router->route->getTarget('block')])) {
+            $blocks = $this->middleware[$action]['block_middleware'][$this->router->route->getTarget('block')];
+            $this->callHandlers($blocks);
         }
     }
 
     /**
      * @description controller middleware
      * @param $action
+     * @throws \ReflectionException
      */
     public function classMiddleware($action)
     {
@@ -132,20 +133,20 @@ class Middleware implements MiddlewareInterface
     /**
      * @description route middleware
      * @param $action
+     * @throws \ReflectionException
      */
     public function routeMiddleware($action)
     {
-        if (isset($this->middleware[$action]['route_middleware'])) {
-            if (isset($this->router->route->getPath()['middleware']) && class_exists($this->middleware[$action]['route_middleware'][$this->router->route->getPath()['middleware']])) {
-                $classes = $this->middleware[$action]['route_middleware'][$this->router->route->getPath()['middleware']];
-                $this->callHandlers($classes);
-            }
+        if (isset($this->middleware[$action]['route_middleware'], $this->router->route->getPath()['middleware']) && class_exists($this->middleware[$action]['route_middleware'][$this->router->route->getPath()['middleware']])) {
+            $classes = $this->middleware[$action]['route_middleware'][$this->router->route->getPath()['middleware']];
+            $this->callHandlers($classes);
         }
     }
 
     /**
      * @param $handlers
      * @param array $params
+     * @throws \ReflectionException
      */
     private function callHandlers($handlers, $params = []){
         $handlers = is_array($handlers) ? $handlers : [$handlers];
@@ -160,6 +161,7 @@ class Middleware implements MiddlewareInterface
      * @param $callback
      * @param array $params
      * @return mixed
+     * @throws \ReflectionException
      */
     private function handle($callback, $params = [])
     {
@@ -172,7 +174,7 @@ class Middleware implements MiddlewareInterface
                 $reflectionMethod = new ReflectionMethod($instance, $method);
                 $dependencies = $params;
                 foreach ($reflectionMethod->getParameters() as $arg) {
-                    if (!is_null($arg->getClass())) {
+                    if ($arg->getClass() !== null) {
                         $dependencies[] = $this->getClass($arg->getClass()->name);
                     }
                 }
@@ -209,7 +211,7 @@ class Middleware implements MiddlewareInterface
             case ResponseInterface::class:
                 return $this->router->response;
             default:
-                return call_user_func_array($this->router->getConfig()['di'], [$class]);
+                return call_user_func($this->router->getConfig()['di'], $class);
         }
     }
 }
